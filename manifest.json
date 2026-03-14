@@ -1,0 +1,26 @@
+{
+  "name": "Control Sindical",
+  "short_name": "Sindicato",
+  "theme_color": "#c41c1c",
+  "background_color": "#050505",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "./index.html",
+  "icons": [
+    {
+      "src": "favicon_io/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon_io/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon_io/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

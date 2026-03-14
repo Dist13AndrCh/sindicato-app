@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Sindical - Reportes y Gestión</title>
+
+    <!-- FAVICONS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="favicon_io/site.webmanifest">
+
+    <!-- Librerías Externas -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#c41c1c">
+</head>
+
+<body>
+
+    <div id="loading" class="loading-overlay">Cargando Sistema...</div>
+    <a href="https://example.com" target="_blank" class="external-portal-btn"> Portal Externo</a>
+
+    <!-- MODALES DE CONFIRMACIÓN Y ALERTA (SISTEMA UI MEJORADO) -->
+    <div id="confirm-overlay">
+        <div class="modal-card" style="text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 10px;">⚠</div>
+            <h2 id="confirm-title" style="border:none; padding:0; text-align: center; margin-bottom: 10px;">Confirmar
+                Acción</h2>
+            <p id="confirm-message" style="color: #aaa; margin: 10px 0 25px 0; font-size: 1rem;">¿Está seguro?</p>
+            <div style="display: flex; gap: 10px;">
+                <button id="confirm-btn-yes" class="btn-red" style="flex: 1;">Aceptar</button>
+                <button onclick="closeConfirm()" class="btn-ghost" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nuevo Modal de Información (Reemplaza alert nativo) -->
+    <div id="info-modal">
+        <div class="modal-card" style="text-align: center; border-color: var(--info);">
+            <div style="font-size: 3rem; margin-bottom: 10px;">ℹ</div>
+            <h2 id="info-title"
+                style="border:none; padding:0; text-align: center; color: var(--info); margin-bottom:10px;">Información
+            </h2>
+            <p id="info-message" style="color: #ddd; margin: 10px 0 25px 0;">Mensaje del sistema.</p>
+            <button onclick="closeInfoModal()" class="btn-blue" style="width: 100%;">Entendido</button>
+        </div>
+    </div>
+
+    <!-- Nuevo Modal de Edición de Pago (Reemplaza prompt nativo) -->
+    <div id="edit-amount-modal">
+        <div class="modal-card">
+            <h2 style="border:none; text-align:center;">Corregir Pago</h2>
+            <p style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9rem;">Modifique el monto
+                registrado en sistema.</p>
+            <input type="hidden" id="edit-pay-id">
+            <label style="color:var(--accent); font-size:0.8rem; font-weight:bold;">NUEVO MONTO (Bs.)</label>
+            <input type="number" id="edit-pay-amount" class="nav-input" placeholder="0.00"
+                style="font-size: 1.2rem; font-weight:bold; text-align:center;">
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="savePaymentCorrection()" class="btn-red" style="flex: 1;">Guardar Cambios</button>
+                <button onclick="closeEditPayModal()" class="btn-ghost" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Recibo Digital -->
+    <div id="receipt-modal">
+        <div class="modal-card">
+            <h2 style="border:none; text-align:center; margin-bottom:10px;">Comprobante Generado</h2>
+            <div id="receipt-printable-area">
+                <div class="receipt-container" id="receipt-content">
+                    <h3>RECIBO OFICIAL</h3>
+                    <div class="receipt-row"><span>Folio:</span><span id="rec-folio">...</span></div>
+                    <div class="receipt-row"><span>Fecha:</span><span id="rec-date">...</span></div>
+                    <div class="receipt-row"><span>Afiliado:</span><span id="rec-socio">...</span></div>
+                    <div
+                        style="margin: 15px 0; border-top: 1px dotted #ccc; border-bottom: 1px dotted #ccc; padding: 10px 0;">
+                        <div style="font-weight:bold; margin-bottom:5px;">Detalle:</div>
+                        <div id="rec-items"></div>
+                    </div>
+                    <div class="receipt-total-line">Total: Bs. <span id="rec-total">0</span></div>
+                    <div class="receipt-footer">SINDICATO - COPIA DIGITAL<br>Generado por Sistema Seguro</div>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                <button onclick="printReceipt()" class="btn-green">🖨 Imprimir / Guardar PDF</button>
+                <button onclick="shareWhatsApp()" class="btn-blue">📱 Enviar a WhatsApp</button>
+                <button onclick="closeReceiptModal()" class="btn-ghost">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-overlay">
+        <div class="modal-card">
+            <h2 id="modal-title">Editar Socio</h2>
+            <input type="text" id="modal-edit-input" placeholder="Nombre completo" class="nav-input">
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button onclick="saveEditSocio()" class="btn-red" style="flex: 1;">Guardar</button>
+                <button onclick="closeModal()" class="btn-ghost" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="login-modal">
+        <div class="modal-card">
+            <h2 style="border:none; text-align: center;">Acceso Directiva</h2>
+            <input type="email" id="login-email" placeholder="Correo Electrónico" class="nav-input">
+            <input type="password" id="login-pass" placeholder="Contraseña" class="nav-input">
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="performLogin()" class="btn-red" style="flex: 1;">Ingresar</button>
+                <button onclick="toggleLoginModal(false)" class="btn-ghost" style="flex: 1;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INGRESO -->
+    <div id="splash">
+        <div class="bat-logo">Control Sindical<br>Servicio Online</div>
+        <div style="width: 300px;">
+            <button onclick="enterAs('user')" style="width: 100%; margin-bottom: 1rem;">Consulta Afiliado</button>
+        </div>
+        <!-- Botón discreto pingüino -->
+        <button class="penguin-btn" onclick="toggleLoginModal(true)"></button>
+    </div>
+
+    <!-- NAVEGACION -->
+    <nav id="main-nav" style="display: none;">
+        <div style="font-weight: 900; color: var(--accent); font-size: 1.1rem; cursor: pointer;" onclick="goHome()">
+            SINDICATO</div>
+        <div class="nav-links" id="admin-links" style="display: none;">
+            <button onclick="openTab('tab-pagos')">Cobros</button>
+            <button onclick="openTab('tab-asistencia')">Reuniones</button>
+            <button onclick="openTab('tab-reportes')">Reportes</button>
+            <button onclick="openTab('tab-avisos')">Avisos</button>
+            <button onclick="openTab('tab-mensajes')">Mensajes</button>
+            <button onclick="openTab('tab-config')">Gestión</button>
+            <button onclick="goHome()" class="btn-ghost" style="color:var(--accent)">Volver</button>
+        </div>
+        <div class="nav-links" id="user-links" style="display: none;">
+            <button onclick="openTab('user-perfil')">Mi Estado</button>
+            <button onclick="openTab('user-avisos')">Comunicados</button>
+            <button onclick="goHome()" class="btn-ghost" style="color:var(--accent)">Volver</button>
+        </div>
+    </nav>
+
+    <!-- ADMINISTRACIÓN -->
+    <div class="container" id="admin-panel">
+
+        <div id="tab-pagos" class="tab-content">
+            <!-- Stats Dashboard Inyectado -->
+            <div id="admin-stats-container" class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Recaudado Este Mes</div>
+                    <div class="stat-val" style="color: var(--success);" id="stat-month">Bs. 0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Recaudado Anual</div>
+                    <div class="stat-val" style="color: var(--warning);" id="stat-year">Bs. 0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Socios Activos</div>
+                    <div class="stat-val" style="color: var(--info);" id="stat-socios">0</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                <div class="card">
+                    <h2>Registrar Cobro & Facturación</h2>
+                    <div class="search-box">
+                        <input type="text" id="pay-name" class="nav-input" placeholder="Buscar socio..."
+                            onkeyup="handleSearch(this, 'pay-drop')">
+                        <div id="pay-drop" class="drop-list"></div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="pay-year" class="nav-input" onchange="loadDossierAdmin()"></select>
+                        <select id="pay-month-start" class="nav-input">
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="number" id="pay-qty" placeholder="Meses" value="1" onchange="updatePayDisplay()"
+                            class="nav-input">
+                        <select id="pay-method" class="nav-input">
+                            <option value="EFECTIVO">Efectivo</option>
+                            <option value="QR">Transferencia QR</option>
+                        </select>
+                    </div>
+                    <input type="number" id="pay-amount" placeholder="Monto Total Bs." value="10" disabled>
+                    <button onclick="submitPayment()" class="btn-red" style="width: 100%;">Confirmar y Generar
+                        Recibo</button>
+                </div>
+
+                <div class="card">
+                    <h2>Historial y Gestión</h2>
+                    <div id="admin-dossier-view">
+                        <p style="color:#666; font-size:0.9rem; text-align:center; padding:20px;">Seleccione un socio
+                            para ver su historial.</p>
+                    </div>
+                    <!-- Contenedor para lista detallada de gestión -->
+                    <div id="admin-pay-management" class="pay-manage-section" style="display:none;">
+                        <h3 style="color:#888; font-size:0.8rem; margin-bottom:10px; text-transform:uppercase;">Gestión
+                            Detallada</h3>
+                        <div id="admin-pay-list" class="pay-manage-list"></div>
+                    </div>
+
+                    <!-- INYECCIÓN: LISTA DE RECIBOS DEL SOCIO SELECCIONADO -->
+                    <div id="admin-socio-receipts" class="pay-manage-section"
+                        style="display:none; margin-top: 15px; border-top: 1px dashed #333; padding-top:10px;">
+                        <h3 style="color:#888; font-size:0.8rem; margin-bottom:10px; text-transform:uppercase;">Recibos
+                            Emitidos</h3>
+                        <div id="admin-socio-receipts-list" class="pay-manage-list"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INYECCIÓN: BUSCADOR DE RECIBOS EMITIDOS (GLOBAL) -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <h2>Buscador de Recibos Emitidos</h2>
+                <div class="search-box">
+                    <input type="text" id="search-receipt-input" class="nav-input"
+                        placeholder="Escriba el nombre del socio para buscar facturas..."
+                        onkeyup="searchReceiptsAdmin()">
+                </div>
+                <div id="receipt-search-results">
+                    <p style="color:#666; text-align:center; padding:10px;">Los resultados aparecerán aquí.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-reportes" class="tab-content" style="display:none">
+            <div class="no-print">
+                <div class="tabs-selector">
+                    <button class="tab-btn active" id="btn-rep-ind"
+                        onclick="switchReportSubTab('individual')">Individual (Kardex)</button>
+                    <button class="tab-btn" id="btn-rep-gen" onclick="switchReportSubTab('general')">General
+                        (Planilla)</button>
+                </div>
+
+                <div id="sub-tab-individual" class="card no-hover">
+                    <h2>Kardex de Afiliado</h2>
+                    <div class="search-box">
+                        <input type="text" id="rep-socio-name" class="nav-input" placeholder="Buscar afiliado..."
+                            onkeyup="handleSearch(this, 'rep-drop')">
+                        <div id="rep-drop" class="drop-list"></div>
+                    </div>
+                    <div style="margin-top:15px; display:flex; gap:10px;">
+                        <button onclick="generateIndReport()" class="btn-red">Generar Todo</button>
+                        <button onclick="printReport()" class="btn-green">Imprimir</button>
+                    </div>
+                </div>
+
+                <div id="sub-tab-general" class="card no-hover" style="display: none;">
+                    <h2>Reporte General</h2>
+                    <select id="rep-gen-year" class="nav-input"></select>
+                    <button onclick="generateGenReport()" class="btn-red">Generar Planilla</button>
+                    <button onclick="printReport()" class="btn-green">Imprimir</button>
+                </div>
+            </div>
+
+            <div id="report-printable-area">
+                <div class="print-header">
+                    <h1 id="print-main-title">Kardex de Control Sindical</h1>
+                    <p id="print-subtitle" style="font-weight: bold; font-size: 14pt; margin-top: 5px;"></p>
+                </div>
+                <div id="rep-visual-content"></div>
+                <div class="print-footer">
+                    <div class="signature">Firma Interesado</div>
+                    <div class="signature">Sello y Firma Directiva</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-asistencia" class="tab-content" style="display:none">
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 1.5rem;">
+                <div class="card">
+                    <h2>Crear Reunión</h2>
+                    <input type="text" id="act-name" placeholder="Nombre Reunión" class="nav-input">
+                    <input type="date" id="act-date" class="nav-input">
+                    <input type="number" id="act-fine" value="20" placeholder="Multa Bs." class="nav-input">
+                    <button onclick="createActivity()" class="btn-red" style="width: 100%;">Crear</button>
+                    <div id="act-list" style="margin-top: 20px;"></div>
+                </div>
+                <div class="card" id="assist-card" style="display:none">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2 id="assist-title" style="margin:0; border:none; padding:0;">Control</h2>
+                        <input type="text" id="assist-filter" placeholder="Buscar socio..." class="nav-input"
+                            style="width:150px; margin:0;" onkeyup="filterAssistTable()">
+                    </div>
+                    <div id="assist-table" style="margin-top:10px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-avisos" class="tab-content" style="display:none">
+            <div class="card">
+                <h2>Publicar Aviso</h2>
+                <input type="text" id="notice-title-input" placeholder="Título" class="nav-input">
+                <textarea id="notice-body-input" placeholder="Mensaje..." class="nav-input"></textarea>
+                <button onclick="publishNotice()" class="btn-red" style="width: 100%;">Publicar</button>
+            </div>
+            <div id="admin-notices-list"></div>
+        </div>
+
+        <!-- Nueva Pestaña de Mensajes Admin -->
+        <div id="tab-mensajes" class="tab-content" style="display:none">
+            <div class="card">
+                <h2>Buzón de Consultas</h2>
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; height: 400px;">
+                    <div id="msg-threads-list" style="border-right: 1px solid var(--border); overflow-y: auto;">
+                        <p style="color:#666; padding:10px;">Seleccione una conversación.</p>
+                    </div>
+                    <div style="display:flex; flex-direction:column;">
+                        <div id="msg-admin-view" class="chat-box" style="flex:1;">Seleccione un socio para ver el chat.
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <input type="text" id="msg-admin-reply" placeholder="Escribir respuesta..."
+                                class="nav-input" style="margin:0;">
+                            <button onclick="sendAdminReply()" class="btn-red" style="width:80px;">Enviar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-config" class="tab-content" style="display:none">
+            <div class="card">
+                <h2>Socios</h2>
+                <input type="text" id="cfg-socio-name" placeholder="Nombre Completo" class="nav-input">
+                <button onclick="addSocio()" class="btn-red">Añadir</button>
+                <div id="cfg-socios-list" style="margin-top:20px;"></div>
+            </div>
+            <div class="card">
+                <h2>Años / Gestiones</h2>
+                <input type="number" id="cfg-new-year" placeholder="Año" class="nav-input">
+                <button onclick="addYear()" class="btn-red">Añadir</button>
+                <div id="cfg-years-list" style="margin-top:10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- USUARIO -->
+    <div class="container" id="user-panel">
+        <div id="user-perfil" class="tab-content">
+            <div class="card">
+                <h2>Mi Estado</h2>
+                <div class="search-box">
+                    <input type="text" id="user-search-input" class="nav-input" placeholder="Escriba su nombre..."
+                        onkeyup="handleSearch(this, 'user-drop')">
+                    <div id="user-drop" class="drop-list"></div>
+                </div>
+                <button onclick="loadUserDashboard()" class="btn-red"
+                    style="width: 100%; margin-top:10px;">Consultar</button>
+            </div>
+            <div id="user-dashboard-view"></div>
+
+            <!-- Soporte Usuario -->
+            <div class="card" id="user-support-card" style="display:none; margin-top:15px;">
+                <h2>Soporte Directo</h2>
+                <div id="user-chat-box" class="chat-box"></div>
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="user-msg-input" placeholder="Escriba su consulta a la directiva..."
+                        class="nav-input" style="margin:0;">
+                    <button onclick="sendUserMessage()" class="btn-red">Enviar</button>
+                </div>
+            </div>
+
+            <!-- Mis Recibos -->
+            <div class="card" id="user-receipts-card" style="display:none; margin-top:15px;">
+                <h2>Mis Recibos Digitales</h2>
+                <div id="user-receipts-list" style="max-height:200px; overflow-y:auto;"></div>
+            </div>
+        </div>
+        <div id="user-avisos" class="tab-content" style="display:none">
+            <div id="user-notices-list"></div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("/sw.js").then((registration) => {
+                    console.log("ServiceWorker registration successful with scope: ", registration.scope);
+                }, (err) => {
+                    console.log("ServiceWorker registration failed: ", err);
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>

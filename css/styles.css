@@ -1,0 +1,204 @@
+        :root {
+            --bg: #050505;
+            --card: #0d0d0d;
+            --accent: #c41c1c;
+            --text: #d1d1d1;
+            --border: #1a1a1a;
+            --glow: rgba(196, 28, 28, 0.4);
+            --radius: 12px;
+            --success: #1b5e20;
+            --warning: #fbc02d;
+            --info: #0288d1;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; outline: none; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+        /* Impresión - Ajustes para Oficio */
+        @media print {
+            @page { size: legal; margin: 1cm; }
+            body { background: white; color: black; }
+            nav, .nav-links, button, .search-box, .stat-grid, #splash, .no-print, #loading, .tabs-selector, .year-chips, #modal-overlay, #confirm-overlay, .penguin-btn, #login-modal, #toast-container, .external-portal-btn, #info-modal, #edit-amount-modal, .pay-manage-section { display: none !important; }
+            /* Ocultar todo excepto el área imprimible activa */
+            body > * { display: none; }
+            .print-visible { display: block !important; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+            
+            .container { display: block !important; width: 100%; max-width: none; padding: 0; margin: 0; }
+            .card { border: none !important; box-shadow: none !important; background: white !important; color: black !important; padding: 0 !important; }
+            
+            .print-header { display: block !important; text-align: center; margin-bottom: 20px; border-bottom: 2px solid black; padding-bottom: 10px; }
+            .print-header h1 { font-size: 18pt; color: black; text-transform: uppercase; }
+            
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 9pt; }
+            th, td { border: 1px solid #000; padding: 6px; text-align: center; }
+            th { background: #eee !important; color: black !important; }
+            
+            .report-section-title { color: black !important; border-bottom: 1px solid black !important; margin-top: 20px !important; font-size: 12pt !important; }
+            
+            .print-footer { display: block !important; margin-top: 50px; display: flex; justify-content: space-around; }
+            .signature { border-top: 1px solid black; width: 220px; text-align: center; font-size: 9pt; margin-top: 40px; }
+
+            /* Estilos específicos para Recibo Impreso */
+            #receipt-content { border: 2px solid black; padding: 20px; color: black; background: white; }
+            .receipt-header { border-bottom: 1px solid black; margin-bottom: 10px; }
+            .receipt-total { border-top: 1px solid black; font-weight: bold; font-size: 1.2rem; margin-top: 10px; text-align: right; }
+        }
+
+        .print-header, .print-footer { display: none; }
+        .report-section-title { margin-top: 25px; margin-bottom: 10px; color: var(--accent); font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+
+        #splash { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 5000; }
+        .bat-logo { font-size: 2rem; font-weight: 900; letter-spacing: 4px; color: var(--accent); text-shadow: 0 0 20px var(--accent); margin-bottom: 3rem; text-transform: uppercase; text-align: center; }
+
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--card); border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 1000; }
+        .nav-links { display: flex; gap: 8px; flex-wrap: wrap; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; display: none; }
+
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; transition: 0.3s ease; position: relative; }
+        .card:not(.no-hover):hover { border-color: var(--accent); box-shadow: 0 0 15px var(--glow); }
+        
+        h2 { color: var(--accent); font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 1.5rem; border-left: 3px solid var(--accent); padding-left: 12px; }
+
+        input, select, textarea { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 12px 15px; border-radius: 10px; margin-bottom: 12px; font-size: 1rem; }
+        input:focus, textarea:focus { border-color: var(--accent); }
+        
+        button { background: #111; color: #fff; border: 1px solid var(--border); padding: 12px 24px; border-radius: 10px; cursor: pointer; text-transform: uppercase; font-weight: bold; transition: 0.3s; font-size: 0.75rem; letter-spacing: 1px; }
+        button:hover { background: var(--accent); border-color: transparent; transform: translateY(-2px); }
+        .btn-red { background: var(--accent); border: none; }
+        .btn-ghost { background: transparent; border: 1px solid var(--border); }
+        .btn-green { background: var(--success); border: none; }
+        .btn-blue { background: var(--info); border: none; }
+
+        /* MODALES ACTUALIZADOS Y NUEVOS */
+        #modal-overlay, #confirm-overlay, #login-modal, #receipt-modal, #info-modal, #edit-amount-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 9000; display: none; justify-content: center; align-items: center; }
+        .modal-card { background: var(--card); border: 1px solid var(--accent); border-radius: var(--radius); width: 90%; max-width: 450px; padding: 2rem; box-shadow: 0 0 30px var(--glow); max-height: 90vh; overflow-y: auto; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        .tabs-selector { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .tab-btn { border: none; background: transparent; color: #555; padding: 8px 15px; font-size: 0.8rem; cursor: pointer; }
+        .tab-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+
+        .search-box { position: relative; }
+        .drop-list { position: absolute; top: 100%; left: 0; right: 0; background: #080808; border: 1px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 200px; overflow-y: auto; z-index: 2000; display: none; }
+        .drop-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #111; }
+        .drop-item:hover { background: var(--accent); color: white; }
+
+        .notice-card { 
+            background: linear-gradient(145deg, #0f0f0f, #080808);
+            border: 1px solid var(--border); 
+            border-radius: 16px; 
+            padding: 1.5rem; 
+            margin-bottom: 1.2rem; 
+            border-left: 4px solid var(--accent);
+            position: relative;
+        }
+        .notice-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #1a1a1a; padding-bottom: 10px; }
+        .notice-title { font-weight: 800; color: #fff; font-size: 1.2rem; }
+        .notice-body { color: #ccc; font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; }
+        .delete-notice-btn { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #444; font-size: 0.9rem; cursor: pointer; }
+
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card { background: #111; padding: 1.5rem; border-radius: 10px; border-left: 4px solid var(--accent); text-align: center; }
+        .stat-val { font-size: 1.8rem; font-weight: 800; color: #fff; margin-top: 5px; }
+        .stat-label { font-size: 0.8rem; color: #777; text-transform: uppercase; letter-spacing: 1px; }
+
+        .months-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 10px; }
+        .month-box { padding: 10px; text-align: center; border-radius: 8px; background: #151515; border: 1px solid var(--border); font-size: 0.7rem; font-weight: 500; text-transform: uppercase; }
+        .month-box.paid { background: var(--success); color: #fff; border-color: #2e7d32; }
+        .month-box.pending { background: #222; color: #555; border-style: dashed; }
+
+        .item-row { display: flex; justify-content: space-between; align-items: center; background: #0a0a0a; padding: 10px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #1a1a1a; font-size: 0.9rem; }
+        
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; }
+        .toast { background: #000; color: #fff; border: 1px solid var(--accent); padding: 15px 25px; border-radius: 10px; margin-top: 10px; box-shadow: 0 0 15px var(--glow); transition: 0.3s; }
+
+        .loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 11000; display: none; }
+
+        .rep-table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #0a0a0a; border: 1px solid var(--border); }
+        .rep-table th, .rep-table td { border: 1px solid var(--border); padding: 8px; text-align: center; font-size: 0.85rem; }
+        .rep-table th { background: #111; color: var(--accent); }
+        
+        .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .badge-paid { background: var(--success); color: white; }
+        .badge-debt { background: var(--accent); color: white; }
+
+        /* Estilos Nuevos */
+        .penguin-btn { position: fixed; bottom: 20px; right: 20px; background: transparent; border: none; font-size: 2rem; cursor: pointer; opacity: 0.3; transition: 0.3s; z-index: 6000; }
+        .penguin-btn:hover { opacity: 1; transform: scale(1.2); }
+
+        .hist-year-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; font-size: 0.8rem; }
+        .hist-label { width: 50px; font-weight: bold; color: var(--accent); }
+        .hist-grid { display: flex; gap: 2px; flex: 1; }
+        .hist-cell { flex: 1; height: 20px; background: #222; border-radius: 2px; display: flex; justify-content: center; align-items: center; font-size: 10px; color: #555; }
+        .hist-cell.paid { background: var(--success); color: #fff; cursor: help; }
+
+        /* Estilos Gestión Detallada de Pagos (NUEVO) */
+        .pay-manage-section { margin-top: 20px; border-top: 1px dashed #333; padding-top: 15px; }
+        .pay-manage-list { max-height: 250px; overflow-y: auto; }
+        .pay-row { display: grid; grid-template-columns: 0.5fr 1.5fr 1fr 1fr; align-items: center; background: #050505; padding: 8px; border-bottom: 1px solid #151515; font-size: 0.85rem; }
+        .pay-row:hover { background: #0f0f0f; }
+        .icon-btn { border: none; background: transparent; cursor: pointer; opacity: 0.7; font-size: 1rem; transition: 0.2s; padding: 0 5px; }
+        .icon-btn:hover { opacity: 1; transform: scale(1.1); }
+        .icon-btn.edit { color: var(--info); }
+        .icon-btn.delete { color: var(--accent); }
+
+        /* Receipt Modal Styles */
+        .receipt-container { background: white; color: black; padding: 20px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; position: relative; }
+        .receipt-container h3 { text-align: center; color: black; border-bottom: 2px dashed black; padding-bottom: 10px; margin-bottom: 15px; font-weight: bold; }
+        .receipt-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.9rem; }
+        .receipt-total-line { border-top: 2px dashed black; margin-top: 10px; padding-top: 10px; font-weight: bold; font-size: 1.2rem; text-align: right; }
+        .receipt-footer { text-align: center; margin-top: 20px; font-size: 0.8rem; color: #555; }
+        .external-portal-btn { position: fixed; bottom: 20px; left: 20px; z-index: 6000; font-size: 0.8rem; padding: 8px 15px; background: var(--card); border: 1px solid var(--border); color: #777; border-radius: 20px; text-decoration: none; transition: 0.3s; }
+        .external-portal-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+        /* Chat Styles */
+        .chat-box { height: 300px; overflow-y: auto; background: #080808; border: 1px solid var(--border); padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-msg { max-width: 80%; padding: 8px 12px; border-radius: 10px; font-size: 0.9rem; line-height: 1.4; }
+        .msg-user { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 0; }
+        .msg-admin { align-self: flex-start; background: #222; color: #ddd; border-bottom-left-radius: 0; }
+        .msg-meta { font-size: 0.7rem; opacity: 0.7; margin-top: 4px; display: block; text-align: right; }
+
+        /* INYECCIÓN DE ESTILOS PARA DEUDA (SOLICITADO) */
+        .debt-container {
+            margin-top: 25px;
+            padding: 20px;
+            background: #000;
+            border: 2px solid var(--accent);
+            border-radius: var(--radius);
+            text-align: center;
+            box-shadow: 0 0 15px var(--glow);
+            animation: pulseDebt 2s infinite;
+        }
+        
+        .debt-title {
+            color: #ccc;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        .debt-amount {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent);
+            text-shadow: 0 0 10px var(--accent);
+            letter-spacing: 1px;
+        }
+
+        .clean-slate {
+            margin-top: 25px;
+            padding: 20px;
+            background: rgba(27, 94, 32, 0.15);
+            border: 1px solid var(--success);
+            border-radius: var(--radius);
+            text-align: center;
+            color: #fff;
+            box-shadow: 0 0 10px rgba(27, 94, 32, 0.3);
+        }
+
+        @keyframes pulseDebt {
+            0% { box-shadow: 0 0 15px var(--glow); }
+            50% { box-shadow: 0 0 25px rgba(196, 28, 28, 0.6); }
+            100% { box-shadow: 0 0 15px var(--glow); }
+        }
