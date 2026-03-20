@@ -31,7 +31,7 @@ function setupListeners() {
             loadDossierAdmin();
         }
     });
-    getPublicRef('recibos').orderBy('timestamp', 'desc').limit(50).onSnapshot(snap => {
+    getPublicRef('recibos').orderBy('timestamp', 'desc').onSnapshot(snap => {
         recibosCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         // Auto-refrescar vistas si están activas
         if (document.getElementById('admin-socio-receipts').style.display === 'block') loadDossierAdmin();
