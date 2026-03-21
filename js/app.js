@@ -801,8 +801,10 @@ function selectAdminChat(sId) {
                 <div class="chat-msg ${m.from === 'admin' ? 'msg-user' : 'msg-admin'}"> <!-- Invertido visualmente para admin -->
                     <span style="font-size:0.6rem; color:#aaa; display:block; margin-bottom:2px;">${m.from === 'user' ? 'Socio' : 'Directiva'}</span>
                     ${m.text}
+                    <span class="msg-meta" style="${m.from === 'admin' ? 'color:rgba(255,255,255,0.7)' : ''}">${m.timestamp?.seconds ? new Date(m.timestamp.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
                 </div>
             `).join("");
+            
     setTimeout(() => {
         chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
     }, 50);
