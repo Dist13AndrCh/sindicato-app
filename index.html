@@ -70,6 +70,28 @@
         </div>
     </div>
 
+    <!-- Modal Cobro de Multa -->
+    <div id="fine-billing-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center;">
+        <div class="modal-card">
+            <h2 style="border:none; text-align:center;">Cobrar Multa</h2>
+            <p style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9rem;" id="fine-billing-desc">Detalle...</p>
+            <input type="hidden" id="fine-act-id">
+            <input type="hidden" id="fine-socio-id">
+            <input type="hidden" id="fine-act-name">
+            <label style="color:var(--accent); font-size:0.8rem; font-weight:bold;">MONTO (Bs.)</label>
+            <input type="number" id="fine-amount" class="nav-input" style="font-size: 1.2rem; font-weight:bold; text-align:center;" disabled>
+            <label style="color:var(--accent); font-size:0.8rem; font-weight:bold;">MÉTODO DE PAGO</label>
+            <select id="fine-pay-method" class="nav-input">
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="QR">Transferencia QR</option>
+            </select>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button onclick="processFinePayment()" class="btn-red" style="flex: 1;">Generar Recibo</button>
+                <button onclick="closeFineBillingModal()" class="btn-ghost" style="flex: 1;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Recibo Digital -->
     <div id="receipt-modal">
         <div class="modal-card">
@@ -328,6 +350,9 @@
                         <p style="color:#666; padding:10px;">Seleccione una conversación.</p>
                     </div>
                     <div style="display:flex; flex-direction:column;">
+                        <div style="display:flex; justify-content:flex-end; margin-bottom: 5px;">
+                            <button onclick="deleteAdminChat()" class="btn-ghost" style="padding: 2px 8px; font-size: 0.8rem; color: var(--accent);">🗑️ Eliminar Chat</button>
+                        </div>
                         <div id="msg-admin-view" class="chat-box" style="flex:1;">Seleccione un socio para ver el chat.
                         </div>
                         <div style="display:flex; gap:5px;">

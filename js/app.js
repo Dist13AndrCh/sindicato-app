@@ -46,6 +46,13 @@ function init() {
     try {
         setupListeners();
         setupKeyboardNav();
+        
+        const savedRole = sessionStorage.getItem('currentRole');
+        const savedTab = sessionStorage.getItem('currentTab');
+        if (savedRole) {
+            enterAs(savedRole, true);
+            if (savedTab) openTab(savedTab);
+        }
     } catch (e) { console.error(e); }
 }
 
@@ -70,7 +77,20 @@ function setupListeners() {
         if (document.getElementById('admin-socio-receipts').style.display === 'block') loadDossierAdmin();
         if (document.getElementById('receipt-search-results').innerHTML.includes('table')) searchReceiptsAdmin();
     });
+    let isInitialMensajes = true;
     getPublicRef('mensajes').orderBy('timestamp', 'asc').onSnapshot(snap => {
+        if (!isInitialMensajes) {
+            snap.docChanges().forEach(change => {
+                if (change.type === 'added') {
+                    const m = change.doc.data();
+                    if (m.from === 'user' && !m.read && document.getElementById('admin-panel').style.display === 'block') {
+                        showToast("🔔 NUEVO MENSAJE de " + (m.socioName || "Socio"));
+                    }
+                }
+            });
+        }
+        isInitialMensajes = false;
+        
         mensajesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         if (document.getElementById('admin-panel').style.display === 'block') {
             renderAdminChatThreads();
@@ -92,9 +112,15 @@ function setupKeyboardNav() {
     document.getElementById('login-pass').addEventListener('keyup', e => { if (e.key === 'Enter') performLogin(); });
     document.getElementById('pay-name').addEventListener('keyup', e => { if (e.key === 'Enter' && socios.length > 0) handleSearch(e.target, 'pay-drop'); });
     document.getElementById('user-search-input').addEventListener('keyup', e => { if (e.key === 'Enter') loadUserDashboard(); });
+    
+    // Mensajes con Enter
+    document.getElementById('msg-admin-reply').addEventListener('keyup', e => { if (e.key === 'Enter') sendAdminReply(); });
+    document.getElementById('user-msg-input').addEventListener('keyup', e => { if (e.key === 'Enter') sendUserMessage(); });
 }
 
 function goHome() {
+    sessionStorage.removeItem('currentRole');
+    sessionStorage.removeItem('currentTab');
     document.querySelectorAll('.container').forEach(c => c.style.display = 'none');
     document.querySelectorAll('.nav-links').forEach(n => n.style.display = 'none');
     document.getElementById('main-nav').style.display = 'none';
@@ -125,23 +151,25 @@ async function performLogin() {
     showLoading(false);
 }
 
-function enterAs(r) {
+function enterAs(r, isReload = false) {
+    sessionStorage.setItem('currentRole', r);
     localStorage.setItem('userRole', r);
     if (r === 'admin') {
         document.getElementById('admin-panel').style.display = 'block';
         document.getElementById('admin-links').style.display = 'flex';
-        openTab('tab-pagos');
+        if (!isReload) openTab('tab-pagos');
         updateAdminStats();
     } else {
         document.getElementById('user-panel').style.display = 'block';
         document.getElementById('user-links').style.display = 'flex';
-        openTab('user-perfil');
+        if (!isReload) openTab('user-perfil');
     }
     document.getElementById('splash').style.display = 'none';
     document.getElementById('main-nav').style.display = 'flex';
 }
 
 function openTab(id) {
+    sessionStorage.setItem('currentTab', id);
     localStorage.setItem('activeTab', id);
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
     document.getElementById(id).style.display = 'block';
@@ -257,12 +285,14 @@ async function loadDossierAdmin() {
     const receiptsContainer = document.getElementById('admin-socio-receipts');
     const receiptsListEl = document.getElementById('admin-socio-receipts-list');
 
-    // Buscar recibos del socio en el cache (que ya se carga al inicio)
+    // Buscar recibos del socio en el cache
     const recibosSocio = recibosCache.filter(r => r.socioId === socio.id);
+    const multasSocio = recibosSocio.filter(r => r.isFine);
+    const recibosNormales = recibosSocio.filter(r => !r.isFine);
 
-    if (recibosSocio.length > 0) {
+    if (recibosNormales.length > 0) {
         receiptsContainer.style.display = 'block';
-        receiptsListEl.innerHTML = recibosSocio.map(r => `
+        receiptsListEl.innerHTML = recibosNormales.map(r => `
                     <div class="pay-row" style="grid-template-columns: 1fr 1fr 1fr 0.5fr; gap:5px;">
                         <span style="color:#888; font-size:0.75rem;">${r.date}</span>
                         <span style="font-weight:bold; color:var(--success);">Bs. ${r.total}</span>
@@ -273,6 +303,23 @@ async function loadDossierAdmin() {
     } else {
         receiptsContainer.style.display = 'none';
         receiptsListEl.innerHTML = "";
+    }
+
+    // INYECCIÓN: HISTORIAL DE MULTAS (Si existe el contenedor, o agregándolo aquí mismo dinámicamente)
+    // Para no romper la UI, agregar el contenido HTML al final del container de recibos si hay multas
+    if (multasSocio.length > 0) {
+        receiptsContainer.style.display = 'block';
+        receiptsListEl.innerHTML += `
+            <h3 style="color:#888; font-size:0.8rem; margin:15px 0 10px 0; border-top: 1px dashed #333; padding-top:10px; text-transform:uppercase;">Historial de Cobro de Multas</h3>
+            ${multasSocio.map(r => `
+                    <div class="pay-row" style="grid-template-columns: 1fr 1fr 1fr 0.5fr; gap:5px; border-left: 3px solid var(--accent);">
+                        <span style="color:#888; font-size:0.72rem;">${r.date}</span>
+                        <span style="font-weight:bold; color:var(--accent);">Bs. ${r.total}</span>
+                        <button class="btn-green" style="padding:2px 8px; font-size:0.7rem;" onclick='openReceiptModal(${JSON.stringify(r).replace(/'/g, "&#39;")})'>Ver</button>
+                        <button class="icon-btn delete" style="padding:2px 8px;" onclick="deleteReceipt('${r.id}', '${r.folio}')">🗑️</button>
+                    </div>
+                `).join("")}
+        `;
     }
 }
 
@@ -638,13 +685,29 @@ async function loadUserDashboard() {
 
     // Cargar Recibos del Usuario
     const recibosSocio = recibosCache.filter(r => r.socioId === socio.id);
+    const multasSocio = recibosSocio.filter(r => r.isFine);
+    const recibosNormales = recibosSocio.filter(r => !r.isFine);
+
     const rList = document.getElementById('user-receipts-list');
-    rList.innerHTML = recibosSocio.length ? recibosSocio.map(r => `
+    rList.innerHTML = recibosNormales.length ? recibosNormales.map(r => `
                 <div class="item-row">
                     <span>${r.date} - Bs.${r.total} (Folio: ${r.folio})</span>
                     <button class="btn-green" onclick='openReceiptModal(${JSON.stringify(r)})'>Ver</button>
                 </div>
-            `).join("") : '<div style="padding:10px; color:#666;">No hay recibos digitales registrados.</div>';
+            `).join("") : '<div style="padding:10px; color:#666; font-size:0.85em;">No hay recibos digitales regulares.</div>';
+    
+    // Inyección histroial multas usuario
+    if (multasSocio.length > 0) {
+        rList.innerHTML += `<div style="margin-top:15px; border-top: 1px dashed #333; padding-top:10px;">
+            <h3 style="font-size:0.9rem; color:var(--accent); margin-bottom:10px;">Historial de Cobro de Multas</h3>
+            ${multasSocio.map(r => `
+                <div class="item-row" style="border-left: 3px solid var(--accent);">
+                    <span style="font-size:0.9rem;">${r.date} - Bs.${r.total}</span>
+                    <button class="btn-ghost" onclick='openReceiptModal(${JSON.stringify(r)})' style="color:var(--accent); border-color:var(--accent);">Ver</button>
+                </div>
+            `).join("")}
+        </div>`;
+    }
     document.getElementById('user-receipts-card').style.display = 'block';
 
     // Activar chat
@@ -750,6 +813,40 @@ function selectAdminChat(sId) {
     });
 }
 
+async function sendAdminReply() {
+    const txt = document.getElementById('msg-admin-reply').value.trim();
+    if (!txt || !selectedChatSocioId) return;
+    
+    const socio = socios.find(s => s.id === selectedChatSocioId);
+    await getPublicRef('mensajes').add({
+        socioId: selectedChatSocioId,
+        socioName: socio ? socio.nombre : 'Socio',
+        text: txt,
+        from: 'admin',
+        read: true,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('msg-admin-reply').value = "";
+}
+
+function deleteAdminChat() {
+    if (!selectedChatSocioId) return showToast("Seleccione un chat primero");
+    openConfirm("¿Eliminar TODA la conversación con este socio?", async () => {
+        showLoading(true);
+        const msgs = mensajesCache.filter(m => m.socioId === selectedChatSocioId);
+        const batch = db.batch();
+        msgs.forEach(m => {
+            batch.delete(getPublicRef('mensajes').doc(m.id));
+        });
+        await batch.commit();
+        selectedChatSocioId = null;
+        document.getElementById('msg-admin-view').innerHTML = "Seleccione un socio para ver el chat.";
+        renderAdminChatThreads();
+        showLoading(false);
+        showToast("Chat eliminado correctamente");
+    });
+}
+
 
 // --- GESTIÓN REUNIONES CON FILTRO ---
 async function loadAssist(aId, name) {
@@ -760,11 +857,12 @@ async function loadAssist(aId, name) {
     const snap = await getPublicRef('asistencias').where('actId', '==', aId).get();
     const asisDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // Render inicial
-    renderAssistTable(asisDocs, aId, name);
+    const act = activities.find(a => a.id === aId);
+    renderAssistTable(asisDocs, aId, name, "", act);
 }
 
-function renderAssistTable(asisDocs, aId, name, filterText = "") {
+function renderAssistTable(asisDocs, aId, name, filterText = "", act = null) {
+    if (!act) act = activities.find(a => a.id === aId) || {fine: 0};
     const sociosFiltrados = socios.filter(s => s.nombre.includes(filterText.toUpperCase()));
 
     document.getElementById('assist-table').innerHTML = `
@@ -779,7 +877,7 @@ function renderAssistTable(asisDocs, aId, name, filterText = "") {
                             <tr>
                                 <td style="text-align:left">${s.nombre}</td>
                                 <td><button onclick="toggleAsis('${aId}','${s.id}','${name}')" class="${isPresent ? 'btn-red' : 'btn-ghost'}">${isPresent ? 'P' : 'F'}</button></td>
-                                <td>${!isPresent ? `<button onclick="toggleFinePaid('${aId}','${s.id}','${name}')" class="${isFinePaid ? 'btn-green' : 'btn-ghost'}">${isFinePaid ? 'PAGADA' : 'COBRAR'}</button>` : '-'}</td>
+                                <td>${!isPresent ? (isFinePaid ? `<button class="btn-green">PAGADA</button>` : `<button onclick="openFineBillingModal('${aId}','${s.id}','${name}', ${act.fine})" class="btn-ghost" style="color:var(--accent); border-color:var(--accent);">COBRAR</button>`) : '-'}</td>
                             </tr>`;
     }).join("")}
                     </tbody>
@@ -793,10 +891,10 @@ async function filterAssistTable() {
     const name = document.getElementById('assist-title').innerText;
     if (!aId) return;
 
-    // Recargar datos frescos para asegurar consistencia
     const snap = await getPublicRef('asistencias').where('actId', '==', aId).get();
     const asisDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderAssistTable(asisDocs, aId, name, filter);
+    const act = activities.find(a => a.id === aId);
+    renderAssistTable(asisDocs, aId, name, filter, act);
 }
 
 async function toggleAsis(aId, sId, name) {
@@ -804,22 +902,74 @@ async function toggleAsis(aId, sId, name) {
     if (snap.empty) await getPublicRef('asistencias').add({ actId: aId, socioId: sId, finePaid: false });
     else await snap.docs[0].ref.delete();
 
-    // Refrescar manteniendo filtro
-    const filter = document.getElementById('assist-filter').value;
-    const snap2 = await getPublicRef('asistencias').where('actId', '==', aId).get();
-    const asisDocs = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderAssistTable(asisDocs, aId, name, filter);
+    filterAssistTable();
 }
 
-async function toggleFinePaid(aId, sId, name) {
-    const snap = await getPublicRef('asistencias').where('actId', '==', aId).where('socioId', '==', sId).get();
-    if (snap.empty) await getPublicRef('asistencias').add({ actId: aId, socioId: sId, finePaid: true });
-    else await snap.docs[0].ref.update({ finePaid: !snap.docs[0].data().finePaid });
+function openFineBillingModal(aId, sId, actName, fineAmount) {
+    document.getElementById('fine-act-id').value = aId;
+    document.getElementById('fine-socio-id').value = sId;
+    document.getElementById('fine-act-name').value = actName;
+    document.getElementById('fine-amount').value = fineAmount;
+    const socio = socios.find(s => s.id === sId);
+    const sName = socio ? socio.nombre : 'Desconocido';
+    document.getElementById('fine-billing-desc').innerText = "Falta: " + actName + "\\nSocio: " + sName;
+    document.getElementById('fine-billing-modal').style.display = 'flex';
+}
 
-    const filter = document.getElementById('assist-filter').value;
-    const snap2 = await getPublicRef('asistencias').where('actId', '==', aId).get();
-    const asisDocs = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderAssistTable(asisDocs, aId, name, filter);
+function closeFineBillingModal() {
+    document.getElementById('fine-billing-modal').style.display = 'none';
+}
+
+async function processFinePayment() {
+    const aId = document.getElementById('fine-act-id').value;
+    const sId = document.getElementById('fine-socio-id').value;
+    const actName = document.getElementById('fine-act-name').value;
+    const amount = parseFloat(document.getElementById('fine-amount').value);
+    const payMethod = document.getElementById('fine-pay-method').value;
+
+    const socio = socios.find(s => s.id === sId);
+    if (!socio) return showToast("Error: Socio no encontrado");
+
+    showLoading(true);
+    try {
+        const batch = db.batch();
+
+        const snap = await getPublicRef('asistencias').where('actId', '==', aId).where('socioId', '==', sId).get();
+        if (snap.empty) {
+            batch.set(getPublicRef('asistencias').doc(), { actId: aId, socioId: sId, finePaid: true });
+        } else {
+            batch.update(snap.docs[0].ref, { finePaid: true });
+        }
+
+        const folio = 'M-' + Date.now().toString(36).toUpperCase();
+        const reciboRef = getPublicRef('recibos').doc(folio);
+        const reciboData = {
+            folio: folio,
+            socioId: socio.id,
+            socioName: socio.nombre,
+            date: new Date().toLocaleDateString(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            items: [{desc: "Cobro Multa: " + actName, amount: amount}],
+            total: amount,
+            method: payMethod,
+            isFine: true,
+            actId: aId
+        };
+        batch.set(reciboRef, reciboData);
+
+        await batch.commit();
+        
+        showToast("Multa cobrada correctamente");
+        closeFineBillingModal();
+        openReceiptModal(reciboData);
+
+        if (document.getElementById('assist-title').dataset.aid === aId) {
+            filterAssistTable();
+        }
+    } catch (e) {
+        showToast("Error al cobrar multa: " + e.message);
+    }
+    showLoading(false);
 }
 
 // --- FUNCIONES COMUNES ---
