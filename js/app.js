@@ -6,14 +6,47 @@ let currentUserSocioId = null; // Para el dashboard de usuario
 
 const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
-async function init() {
+function init() {
     showLoading(true);
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            try {
+                await auth.signInAnonymously();
+            } catch (e) { console.error(e); }
+        } else {
+            const role = localStorage.getItem('userRole');
+            if (!user.isAnonymous) {
+                enterAs('admin');
+                const tab = localStorage.getItem('activeTab');
+                if (tab) openTab(tab);
+                else openTab('tab-pagos');
+            } else if (role === 'user') {
+                enterAs('user');
+                const tab = localStorage.getItem('activeTab');
+                if (tab) openTab(tab);
+                else openTab('user-perfil');
+                
+                const uName = localStorage.getItem('activeUserDashboard');
+                if (uName) {
+                    document.getElementById('user-search-input').value = uName;
+                    let checkSocios = setInterval(() => {
+                        if (socios.length > 0) {
+                            clearInterval(checkSocios);
+                            loadUserDashboard();
+                        }
+                    }, 200);
+                }
+            } else {
+                goHome();
+            }
+        }
+        showLoading(false);
+    });
+    
     try {
-        if (!auth.currentUser) await auth.signInAnonymously();
         setupListeners();
         setupKeyboardNav();
     } catch (e) { console.error(e); }
-    showLoading(false);
 }
 
 function setupListeners() {
@@ -39,7 +72,10 @@ function setupListeners() {
     });
     getPublicRef('mensajes').orderBy('timestamp', 'asc').onSnapshot(snap => {
         mensajesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        if (document.getElementById('admin-panel').style.display === 'block') renderAdminChatThreads();
+        if (document.getElementById('admin-panel').style.display === 'block') {
+            renderAdminChatThreads();
+            if (selectedChatSocioId) selectAdminChat(selectedChatSocioId);
+        }
         if (currentUserSocioId) renderUserChat(currentUserSocioId);
     });
 }
@@ -64,6 +100,9 @@ function goHome() {
     document.getElementById('main-nav').style.display = 'none';
     document.getElementById('splash').style.display = 'flex';
     currentUserSocioId = null;
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('activeTab');
+    localStorage.removeItem('activeUserDashboard');
 }
 
 function toggleLoginModal(show) {
@@ -87,6 +126,7 @@ async function performLogin() {
 }
 
 function enterAs(r) {
+    localStorage.setItem('userRole', r);
     if (r === 'admin') {
         document.getElementById('admin-panel').style.display = 'block';
         document.getElementById('admin-links').style.display = 'flex';
@@ -102,6 +142,7 @@ function enterAs(r) {
 }
 
 function openTab(id) {
+    localStorage.setItem('activeTab', id);
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
     document.getElementById(id).style.display = 'block';
 }
@@ -530,6 +571,7 @@ async function loadUserDashboard() {
     if (!socio) return showToast("Nombre no válido");
 
     currentUserSocioId = socio.id;
+    localStorage.setItem('activeUserDashboard', socio.nombre);
 
     showLoading(true);
     const pagos = pagosCache.filter(p => p.socioId === socio.id);
@@ -623,7 +665,9 @@ function renderUserChat(sId) {
                     <span class="msg-meta">${new Date(m.timestamp?.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
             `).join("");
-    chatBox.scrollTop = chatBox.scrollHeight;
+    setTimeout(() => {
+        chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+    }, 50);
 }
 
 async function sendUserMessage() {
@@ -639,6 +683,25 @@ async function sendUserMessage() {
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
     document.getElementById('user-msg-input').value = "";
+}
+
+async function sendAdminReply() {
+    const txt = document.getElementById('msg-admin-reply').value.trim();
+    if (!txt || !selectedChatSocioId) {
+        if (!selectedChatSocioId) showToast("Seleccione un socio para responder");
+        return;
+    }
+    const thread = mensajesCache.find(m => m.socioId === selectedChatSocioId);
+    const sName = thread ? thread.socioName : "Socio";
+    await getPublicRef('mensajes').add({
+        socioId: selectedChatSocioId,
+        socioName: sName,
+        text: txt,
+        from: 'admin',
+        read: true,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('msg-admin-reply').value = "";
 }
 
 function renderAdminChatThreads() {
@@ -677,7 +740,9 @@ function selectAdminChat(sId) {
                     ${m.text}
                 </div>
             `).join("");
-    chatBox.scrollTop = chatBox.scrollHeight;
+    setTimeout(() => {
+        chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+    }, 50);
 
     // Marcar leídos
     msgs.filter(m => m.from === 'user' && !m.read).forEach(m => {
