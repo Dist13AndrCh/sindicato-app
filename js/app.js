@@ -230,9 +230,12 @@ async function loadDossierAdmin() {
 
     const pagosSocio = pagosCache.filter(p => p.socioId === socio.id);
     const currentYear = new Date().getFullYear();
-    const yearsToShow = Array.from({ length: 5 }, (_, i) => currentYear - i);
+    let yearsToShow = gestiones.map(g => parseInt(g.val)).sort((a,b) => b - a);
+    if(yearsToShow.length === 0) {
+        yearsToShow = Array.from({ length: 5 }, (_, i) => currentYear - i);
+    }
 
-    let gridHtml = `<div style="padding: 10px;">`;
+    let gridHtml = `<div style="padding: 10px; max-height: 300px; overflow-y: auto; overflow-x: hidden; border: 1px solid var(--border); border-radius: var(--radius);">`;
     yearsToShow.forEach(y => {
         gridHtml += `
                 <div class="hist-year-row">
