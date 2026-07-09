@@ -20,12 +20,12 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#c41c1c">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
 </head>
 
 <body>
 
     <div id="loading" class="loading-overlay">Cargando Sistema...</div>
-    <a href="https://dist13andrch.github.io/rendicion-sindical/" target="_blank" class="external-portal-btn"> Rendición de Cuentas 📖 </a>
 
     <!-- MODALES DE CONFIRMACIÓN Y ALERTA (SISTEMA UI MEJORADO) -->
     <div id="confirm-overlay">
@@ -57,9 +57,29 @@
     <div id="edit-amount-modal">
         <div class="modal-card">
             <h2 style="border:none; text-align:center;">Corregir Pago</h2>
-            <p style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9rem;">Modifique el monto
+            <p style="text-align:center; color:#888; margin-bottom:15px; font-size:0.9rem;">Modifique el monto o mes
                 registrado en sistema.</p>
             <input type="hidden" id="edit-pay-id">
+            <input type="hidden" id="edit-pay-receipt-id">
+            <input type="hidden" id="edit-pay-year">
+            <input type="hidden" id="edit-pay-old-month">
+
+            <label style="color:var(--accent); font-size:0.8rem; font-weight:bold;">MES ACREDITADO</label>
+            <select id="edit-pay-month" class="nav-input" style="margin-bottom: 10px;">
+                <option value="1">Enero</option>
+                <option value="2">Febrero</option>
+                <option value="3">Marzo</option>
+                <option value="4">Abril</option>
+                <option value="5">Mayo</option>
+                <option value="6">Junio</option>
+                <option value="7">Julio</option>
+                <option value="8">Agosto</option>
+                <option value="9">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+            </select>
+
             <label style="color:var(--accent); font-size:0.8rem; font-weight:bold;">NUEVO MONTO (Bs.)</label>
             <input type="number" id="edit-pay-amount" class="nav-input" placeholder="0.00"
                 style="font-size: 1.2rem; font-weight:bold; text-align:center;">
@@ -78,6 +98,7 @@
             <input type="hidden" id="fine-act-id">
             <input type="hidden" id="fine-socio-id">
             <input type="hidden" id="fine-act-name">
+            <input type="hidden" id="fine-is-atraso">
             <label style="color:var(--accent); font-size:0.8rem; font-weight:bold;">MONTO (Bs.)</label>
             <input type="number" id="fine-amount" class="nav-input" style="font-size: 1.2rem; font-weight:bold; text-align:center;" disabled>
             <label style="color:var(--accent); font-size:0.8rem; font-weight:bold;">MÉTODO DE PAGO</label>
@@ -85,6 +106,7 @@
                 <option value="EFECTIVO">Efectivo</option>
                 <option value="QR">Transferencia QR</option>
             </select>
+            <input type="text" id="fine-physical-folio" class="nav-input" placeholder="Nº Talonario (Obligatorio)">
             <div style="display: flex; gap: 10px; margin-top: 15px;">
                 <button onclick="processFinePayment()" class="btn-red" style="flex: 1;">Generar Recibo</button>
                 <button onclick="closeFineBillingModal()" class="btn-ghost" style="flex: 1;">Cancelar</button>
@@ -99,7 +121,14 @@
             <div id="receipt-printable-area">
                 <div class="receipt-container" id="receipt-content">
                     <h3>RECIBO OFICIAL</h3>
-                    <div class="receipt-row"><span>Folio:</span><span id="rec-folio">...</span></div>
+                    <div class="receipt-row"><span>Folio Sistema:</span><span id="rec-folio">...</span></div>
+                    <div class="receipt-row">
+                        <span>Nº Talonario Físico:</span>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <span id="rec-physical-folio" style="font-weight:bold; font-size:1.1rem; color:var(--accent);">...</span>
+                            <button class="icon-btn edit no-print" onclick="promptEditPhysicalFolio()" title="Editar Nº Talonario">✏️</button>
+                        </div>
+                    </div>
                     <div class="receipt-row"><span>Fecha:</span><span id="rec-date">...</span></div>
                     <div class="receipt-row"><span>Afiliado:</span><span id="rec-socio">...</span></div>
                     <div
@@ -142,33 +171,68 @@
         </div>
     </div>
 
-    <!-- INGRESO -->
-    <div id="splash">
-        <div class="bat-logo">Control Sindical<br>Servicio Online</div>
-        <div style="width: 300px;">
-            <button onclick="enterAs('user')" style="width: 100%; margin-bottom: 1rem;">Consulta Afiliado</button>
+    <!-- Modal Temas -->
+    <div id="theme-modal">
+        <div class="modal-card">
+            <h2 style="border:none; text-align:center; margin-bottom: 20px;">Apariencia</h2>
+            <div class="responsive-grid-2" style="gap: 10px;">
+                <button onclick="setTheme('blue')" class="btn-ghost" style="border-color:#5bc0be; color:#5bc0be;">🔵 Azul Marino</button>
+                <button onclick="setTheme('dark')" class="btn-ghost" style="border-color:#c41c1c; color:#c41c1c;">🦇 The Batman</button>
+                <button onclick="setTheme('light')" class="btn-ghost" style="border-color:#007aff; color:#007aff; background:#fff;">⚪ Claro</button>
+                <button onclick="setTheme('billie-dsam')" class="btn-ghost" style="border-color:#ffcc00; color:#ff0000; background:#fff;">🔴 Don't Smile At Me</button>
+                <button onclick="setTheme('billie-green')" class="btn-ghost" style="border-color:#39ff14; color:#39ff14;">🟢 WWAFA,WDWG?</button>
+                <button onclick="setTheme('billie-blonde')" class="btn-ghost" style="border-color:#c9a227; color:#c9a227; background:#f2e9e4;">🟡 Happier Than Ever</button>
+                <button onclick="setTheme('billie-hmhas')" class="btn-ghost" style="border-color:#dbeaff; color:#dbeaff;">🌊 HMHAS</button>
+            </div>
+            <button onclick="closeThemeModal()" class="btn-ghost" style="width: 100%; margin-top: 15px;">Cerrar</button>
         </div>
-        <!-- Botón discreto pingüino -->
-        <button class="penguin-btn" onclick="toggleLoginModal(true)">🐧</button>
     </div>
 
+    <!-- INGRESO -->
+    <div id="splash">
+        <div class="bat-logo" style="margin-bottom: 2rem;">Control Sindical<br><span style="font-size: 0.5em; font-weight: 500; color: #888; letter-spacing: 2px;">Seguimiento Cuotas Sindicales</span></div>
+        <div style="width: 320px; display: flex; flex-direction: column; gap: 15px;">
+            <button onclick="enterAs('user')" class="splash-btn">👤 Entrar como Afiliado</button>
+            <button onclick="toggleLoginModal(true)" class="splash-btn admin">🛡️ Entrar como Admin</button>
+            
+            <!-- Botón Rendición de Cuentas (Próximamente) -->
+            <!-- Para habilitar el enlace, reemplaza el onclick por: onclick="window.open('https://dist13andrch.github.io/rendicion-sindical/', '_blank')" -->
+            <button onclick="showInfoModal('Módulo en construcción. Disponible Próximamente.')" class="splash-btn" style="font-size: 0.9rem; opacity: 0.8; background: transparent; color: var(--accent); border-color: var(--border);">📖 Rendición de Cuentas (Próximamente)</button>
+        </div>
+        <button class="icon-btn" onclick="openThemeModal()" style="position: absolute; top: 20px; right: 20px; font-size: 1.5rem;" title="Apariencia">⚙️</button>
+
+        <!-- Soporte Flotante -->
+        <div class="fab-container">
+            <div class="fab-menu" id="fab-menu">
+                <div style="font-size: 0.8rem; color: #888; margin-bottom: 10px; text-align: center; letter-spacing: 1px; font-weight: bold;">CONSULTAS</div>
+                <button onclick="sendUserMessage('75998443')" class="btn-ghost" style="border: 1px solid #25D366; color: #25D366; display:flex; align-items:center; justify-content:flex-start; gap: 10px;">
+                    📱 Maribel Garcia
+                </button>
+                <button onclick="sendUserMessage('62687476')" class="btn-ghost" style="border: 1px solid #25D366; color: #25D366; display:flex; align-items:center; justify-content:flex-start; gap: 10px;">
+                    📱 Sebastian Avila
+                </button>
+            </div>
+            <button class="fab-btn" onclick="document.getElementById('fab-menu').classList.toggle('active')">📱</button>
+        </div>
+    </div>
     <!-- NAVEGACION -->
     <nav id="main-nav" style="display: none;">
-        <div style="font-weight: 900; color: var(--accent); font-size: 1.1rem; cursor: pointer;" onclick="goHome()">
-            SINDICATO</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-weight: 900; color: var(--accent); font-size: 1.1rem; cursor: pointer; letter-spacing: 1px;" onclick="goHome()">SINDICATO</div>
+            <button class="icon-btn" onclick="openThemeModal()" style="font-size: 1rem; color: #888;" title="Apariencia">⚙️</button>
+        </div>
         <div class="nav-links" id="admin-links" style="display: none;">
-            <button onclick="openTab('tab-pagos')">Cobros</button>
-            <button onclick="openTab('tab-asistencia')">Reuniones</button>
-            <button onclick="openTab('tab-reportes')">Reportes</button>
-            <button onclick="openTab('tab-avisos')">Avisos</button>
-            <button onclick="openTab('tab-mensajes')">Mensajes</button>
-            <button onclick="openTab('tab-config')">Gestión</button>
-            <button onclick="goHome()" class="btn-ghost" style="color:var(--accent)">Volver</button>
+            <button onclick="openTab('tab-pagos')" class="dock-btn" data-target="tab-pagos">💰 Cobros</button>
+            <button onclick="openTab('tab-asistencia')" class="dock-btn" data-target="tab-asistencia">📅 Reuniones</button>
+            <button onclick="openTab('tab-reportes')" class="dock-btn" data-target="tab-reportes">📊 Reportes</button>
+            <button onclick="openTab('tab-avisos')" class="dock-btn" data-target="tab-avisos">📢 Avisos</button>
+            <button onclick="openTab('tab-config')" class="dock-btn" data-target="tab-config">⚙️ Gestión</button>
+            <button onclick="goHome()" class="dock-btn ghost">⬅️ Salir</button>
         </div>
         <div class="nav-links" id="user-links" style="display: none;">
-            <button onclick="openTab('user-perfil')">Mi Estado</button>
-            <button onclick="openTab('user-avisos')">Comunicados</button>
-            <button onclick="goHome()" class="btn-ghost" style="color:var(--accent)">Volver</button>
+            <button onclick="openTab('user-perfil')" class="dock-btn" data-target="user-perfil">👤 Mi Estado</button>
+            <button onclick="openTab('user-avisos')" class="dock-btn" data-target="user-avisos">📢 Comunicados</button>
+            <button onclick="goHome()" class="dock-btn ghost">⬅️ Salir</button>
         </div>
     </nav>
 
@@ -182,10 +246,7 @@
                     <div class="stat-label">Recaudado Este Mes</div>
                     <div class="stat-val" style="color: var(--success);" id="stat-month">Bs. 0</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Recaudado Anual</div>
-                    <div class="stat-val" style="color: var(--warning);" id="stat-year">Bs. 0</div>
-                </div>
+
                 <div class="stat-card">
                     <div class="stat-label">Socios Activos</div>
                     <div class="stat-val" style="color: var(--info);" id="stat-socios">0</div>
@@ -225,6 +286,7 @@
                             <option value="QR">Transferencia QR</option>
                         </select>
                     </div>
+                    <input type="text" id="pay-physical-folio" class="nav-input" placeholder="Nº Talonario (Obligatorio)">
                     <input type="number" id="pay-amount" placeholder="Monto Total Bs." value="10" disabled>
                     <button onclick="submitPayment()" class="btn-red" style="width: 100%;">Confirmar y Generar
                         Recibo</button>
@@ -253,6 +315,21 @@
                 </div>
             </div>
 
+            <div class="card" style="margin-top: 1.5rem;">
+                <h2>Últimos Recibos Emitidos</h2>
+                <div id="latest-receipts-list" style="margin-top: 10px;">
+                    <div class="empty-state">Cargando últimos recibos...</div>
+                </div>
+            </div>
+
+            <!-- INYECCIÓN: MULTAS PENDIENTES POR REUNIONES -->
+            <div class="card" style="margin-top: 1.5rem; border-color: var(--accent);">
+                <h2 style="color: var(--accent);">Multas Pendientes por Faltas a Reuniones</h2>
+                <div id="pending-fines-list" style="margin-top: 10px; max-height: 250px; overflow-y: auto;">
+                    <div class="empty-state">Cargando multas pendientes...</div>
+                </div>
+            </div>
+
             <!-- INYECCIÓN: BUSCADOR DE RECIBOS EMITIDOS (GLOBAL) -->
             <div class="card" style="margin-top: 1.5rem;">
                 <h2>Buscador de Recibos Emitidos</h2>
@@ -274,6 +351,9 @@
                         onclick="switchReportSubTab('individual')">Individual (Kardex)</button>
                     <button class="tab-btn" id="btn-rep-gen" onclick="switchReportSubTab('general')">General
                         (Planilla)</button>
+                    <button class="tab-btn" id="btn-rep-fin" onclick="switchReportSubTab('finanzas')">Finanzas
+                        (Recaudación)</button>
+                    <button class="tab-btn" id="btn-rep-asis" onclick="switchReportSubTab('asistencia')">Asistencia</button>
                 </div>
 
                 <div id="sub-tab-individual" class="card no-hover">
@@ -295,6 +375,25 @@
                     <button onclick="generateGenReport()" class="btn-red">Generar Planilla</button>
                     <button onclick="printReport()" class="btn-green">Imprimir</button>
                 </div>
+
+                <div id="sub-tab-finanzas" class="card no-hover" style="display: none;">
+                    <h2>Historial de Recaudación</h2>
+                    <p style="color:#aaa; font-size: 0.9rem; margin-bottom: 10px;">Consulta los ingresos mes a mes en base a los recibos emitidos.</p>
+                    <button onclick="generateFinanzasReport()" class="btn-red w-100 mb-1">Generar Reporte Mensual</button>
+                    <div id="finanzas-results" style="max-height: 400px; overflow-y: auto;"></div>
+                </div>
+
+                <div id="sub-tab-asistencia" class="card no-hover" style="display: none;">
+                    <h2>Listas de Asistencia (Reuniones)</h2>
+                    <select id="rep-asis-act" class="nav-input"></select>
+                    <label class="modern-toggle">
+                        <span class="toggle-label">Mostrar montos cobrados</span>
+                        <input type="checkbox" id="rep-asis-show-money" class="toggle-checkbox">
+                        <div class="toggle-slider"></div>
+                    </label>
+                    <button onclick="generateAsisReport()" class="btn-red">Generar Lista</button>
+                    <button onclick="printReport()" class="btn-green">Imprimir</button>
+                </div>
             </div>
 
             <div id="report-printable-area">
@@ -304,80 +403,152 @@
                 </div>
                 <div id="rep-visual-content"></div>
                 <div class="print-footer">
-                    <div class="signature">Firma Interesado</div>
                     <div class="signature">Sello y Firma Directiva</div>
                 </div>
             </div>
         </div>
 
         <div id="tab-asistencia" class="tab-content" style="display:none">
-            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 1.5rem;">
+            <div class="responsive-grid-asym" style="gap: 1.5rem;">
                 <div class="card">
-                    <h2>Crear Reunión</h2>
-                    <input type="text" id="act-name" placeholder="Nombre Reunión" class="nav-input">
+                    <h2>Crear Reunión / Actividad</h2>
+                    <input type="text" id="act-name" placeholder="Nombre (Ej: Reunión Ordinaria)" class="nav-input">
+                    <input type="text" id="act-type" placeholder="Motivo (Ej: Emergencia)" class="nav-input">
                     <input type="date" id="act-date" class="nav-input">
-                    <input type="number" id="act-fine" value="20" placeholder="Multa Bs." class="nav-input">
-                    <button onclick="createActivity()" class="btn-red" style="width: 100%;">Crear</button>
-                    <div id="act-list" style="margin-top: 20px;"></div>
-                </div>
-                <div class="card" id="assist-card" style="display:none">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h2 id="assist-title" style="margin:0; border:none; padding:0;">Control</h2>
-                        <input type="text" id="assist-filter" placeholder="Buscar socio..." class="nav-input"
-                            style="width:150px; margin:0;" onkeyup="filterAssistTable()">
+                    <div class="responsive-grid-2" style="gap: 10px;">
+                        <div>
+                            <label style="font-size:0.75rem; color:#888;">Multa Falta (Bs)</label>
+                            <input type="number" id="act-fine" value="20" placeholder="Ej: 20" class="nav-input">
+                        </div>
+                        <div>
+                            <label style="font-size:0.75rem; color:#888;">Multa Atraso/Fuga (Bs)</label>
+                            <input type="number" id="act-fine-late" value="10" placeholder="Ej: 10" class="nav-input">
+                        </div>
                     </div>
+                    <button onclick="createActivity()" class="btn-red" style="width: 100%; margin-top:10px;">Crear Actividad</button>
+                    <div id="act-list" style="margin-top: 20px; max-height:400px; overflow-y:auto; padding-right:5px;"></div>
+                </div>
+                <div class="card" id="assist-card" style="display:none; position:relative;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2 id="assist-title" style="margin:0; border:none; padding:0; width:50%;">Control</h2>
+                        <input type="text" id="assist-filter" placeholder="Buscar socio..." class="nav-input"
+                            style="width:45%; margin:0;" onkeyup="filterAssistTable()">
+                    </div>
+                    
+                    <div class="stat-grid" style="grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-top:15px; margin-bottom:15px;">
+                        <div class="stat-card" style="padding:10px;">
+                            <div class="stat-label">Presentes</div>
+                            <div class="stat-val" style="color:var(--success); font-size:1.2rem;" id="astat-pres">0</div>
+                        </div>
+                        <div class="stat-card" style="padding:10px;">
+                            <div class="stat-label">Faltas / Fugas</div>
+                            <div class="stat-val" style="color:var(--accent); font-size:1.2rem;" id="astat-faltas">0</div>
+                        </div>
+                        <div class="stat-card" style="padding:10px;">
+                            <div class="stat-label">Atrasos</div>
+                            <div class="stat-val" style="color:var(--warning); font-size:1.2rem;" id="astat-atrasos">0</div>
+                        </div>
+                        <div class="stat-card" style="padding:10px;">
+                            <div class="stat-label">Proyectado (Multas)</div>
+                            <div class="stat-val" style="font-size:1rem;" id="astat-proy">Bs. 0</div>
+                        </div>
+                        <div class="stat-card" style="padding:10px; grid-column: span 2;">
+                            <div class="stat-label">Recaudado (Pagado)</div>
+                            <div class="stat-val" style="color:var(--success); font-size:1rem;" id="astat-cobrado">Bs. 0</div>
+                        </div>
+                    </div>
+
+                    <button onclick="markRemainingAsAbsences()" class="btn-ghost" style="width:100%; border:1px dashed var(--accent); color:var(--accent); margin-bottom:10px;">
+                        Marcar Faltas a los Restantes
+                    </button>
+
                     <div id="assist-table" style="margin-top:10px;"></div>
                 </div>
             </div>
         </div>
 
         <div id="tab-avisos" class="tab-content" style="display:none">
-            <div class="card">
-                <h2>Publicar Aviso</h2>
-                <input type="text" id="notice-title-input" placeholder="Título" class="nav-input">
-                <textarea id="notice-body-input" placeholder="Mensaje..." class="nav-input"></textarea>
-                <button onclick="publishNotice()" class="btn-red" style="width: 100%;">Publicar</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin:0; border:none;">Centro de Comunicaciones</h2>
+                <button onclick="requestPushPermission()" id="btn-push-perm" class="btn-ghost" style="color:var(--accent); border-color:var(--accent); font-size:0.8rem; display:none;">🔔 Activar Notificaciones</button>
             </div>
+            
+            <div class="card" id="notice-form-card">
+                <h2 id="notice-form-title">Publicar Aviso</h2>
+                <input type="hidden" id="notice-id-input">
+                <input type="text" id="notice-title-input" placeholder="Título" class="nav-input">
+                
+                <div style="margin-bottom:15px;">
+                    <label style="color:#888; font-size:0.8rem; font-weight:bold; display:block; margin-bottom:5px;">PRIORIDAD</label>
+                    <div style="display:flex; gap:10px;">
+                        <button id="prio-info" class="btn-ghost active-prio" style="flex:1; border-color:#007BFF; color:#007BFF; font-size:0.7rem;" onclick="setNoticePriority('info')">INFORMATIVO</button>
+                        <button id="prio-warn" class="btn-ghost" style="flex:1; border-color:var(--warning); color:var(--warning); font-size:0.7rem;" onclick="setNoticePriority('warn')">IMPORTANTE</button>
+                        <button id="prio-urg" class="btn-ghost" style="flex:1; border-color:var(--accent); color:var(--accent); font-size:0.7rem;" onclick="setNoticePriority('urg')">URGENTE</button>
+                    </div>
+                    <input type="hidden" id="notice-priority-input" value="info">
+                </div>
+
+                <textarea id="notice-body-input" placeholder="Mensaje detallado..." class="nav-input" style="min-height: 100px;"></textarea>
+                
+                <div style="display:flex; gap:10px;">
+                    <button onclick="publishNotice()" class="btn-red" style="flex: 2;" id="btn-publish-notice">Publicar</button>
+                    <button onclick="cancelEditNotice()" class="btn-ghost" style="flex: 1; display:none;" id="btn-cancel-notice">Cancelar</button>
+                </div>
+            </div>
+            
             <div id="admin-notices-list"></div>
         </div>
 
-        <!-- Nueva Pestaña de Mensajes Admin -->
-        <div id="tab-mensajes" class="tab-content" style="display:none">
-            <div class="card">
-                <h2>Buzón de Consultas</h2>
-                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; height: 400px;">
-                    <div id="msg-threads-list" style="border-right: 1px solid var(--border); overflow-y: auto;">
-                        <p style="color:#666; padding:10px;">Seleccione una conversación.</p>
+        <!-- Pestaña Mensajes Admin ELIMINADA (Reemplazada por WhatsApp) -->
+
+        <div id="tab-config" class="tab-content" style="display:none">
+            <h2 style="margin-bottom: 15px;">Panel de Administración</h2>
+            <div class="responsive-grid-2" style="gap: 1.5rem;">
+                <!-- Columna Izquierda: Socios -->
+                <div class="card" style="display: flex; flex-direction: column; max-height: 70vh;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h2 style="margin: 0; border: none;">Afiliados</h2>
+                        <span id="cfg-socios-count" style="background: var(--accent); color: var(--text-on-accent); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">0</span>
                     </div>
-                    <div style="display:flex; flex-direction:column; height: 100%; overflow: hidden;">
-                        <div style="display:flex; justify-content:flex-end; margin-bottom: 5px; flex-shrink: 0;">
-                            <button onclick="deleteAdminChat()" class="btn-ghost" style="padding: 2px 8px; font-size: 0.8rem; color: var(--accent);">🗑️ Eliminar Chat</button>
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="cfg-socio-name" placeholder="Nuevo Socio..." class="nav-input" style="flex: 2; margin: 0;">
+                        <button onclick="addSocio()" class="btn-red" style="flex: 1; margin: 0;">Añadir</button>
+                    </div>
+
+                    <input type="text" id="cfg-socio-search" placeholder="🔍 Buscar socio..." class="nav-input" onkeyup="filterCfgSocios()" style="margin-bottom: 10px; border-style: dashed;">
+                    
+                    <div id="cfg-socios-list" style="overflow-y: auto; flex-grow: 1; padding-right: 5px;"></div>
+                </div>
+
+                <!-- Columna Derecha: Gestiones y Seguridad -->
+                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div class="card">
+                        <h2>Gestiones (Años)</h2>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <input type="number" id="cfg-new-year" placeholder="Año (Ej. 2026)" class="nav-input" style="flex: 2; margin: 0;">
+                            <button onclick="addYear()" class="btn-red" style="flex: 1; margin: 0;">Añadir</button>
                         </div>
-                        <div id="msg-admin-view" class="chat-box" style="flex: 1; min-height: 0; height: auto; overflow-y: auto;">
-                            Seleccione un socio para ver el chat.
-                        </div>
-                        <div style="display:flex; gap:5px; flex-shrink: 0;">
-                            <input type="text" id="msg-admin-reply" placeholder="Escribir respuesta..."
-                                class="nav-input" style="margin:0;" onkeyup="if(event.key === 'Enter') sendAdminReply()">
-                            <button onclick="sendAdminReply()" class="btn-red" style="width:80px;">Enviar</button>
+                        <div id="cfg-years-list" style="max-height: 200px; overflow-y: auto;"></div>
+                    </div>
+
+                    <div class="card" style="border-left: 4px solid var(--success);">
+                        <h2>Seguridad y Respaldo</h2>
+                        <p style="color: #ccc; font-size: 0.85rem; line-height: 1.4; margin-bottom: 15px;">
+                            Descarga una copia de seguridad local de toda la base de datos (Socios, Pagos, Multas, Avisos). 
+                            Es recomendable hacerlo cada mes para evitar pérdida de datos.
+                        </p>
+                        <div style="display:flex; gap:10px;">
+                            <button onclick="downloadBackup()" class="btn-ghost" style="flex:1; border-color: var(--success); color: var(--success); font-weight: bold; padding: 10px;">
+                                💾 Exportar
+                            </button>
+                            <button onclick="document.getElementById('import-backup-file').click()" class="btn-ghost" style="flex:1; border-color: var(--warning); color: var(--warning); font-weight: bold; padding: 10px;">
+                                📂 Restaurar
+                            </button>
+                            <input type="file" id="import-backup-file" style="display:none" accept=".json" onchange="processBackupFile(event)">
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div id="tab-config" class="tab-content" style="display:none">
-            <div class="card">
-                <h2>Socios</h2>
-                <input type="text" id="cfg-socio-name" placeholder="Nombre Completo" class="nav-input">
-                <button onclick="addSocio()" class="btn-red">Añadir</button>
-                <div id="cfg-socios-list" style="margin-top:20px;"></div>
-            </div>
-            <div class="card">
-                <h2>Años / Gestiones</h2>
-                <input type="number" id="cfg-new-year" placeholder="Año" class="nav-input">
-                <button onclick="addYear()" class="btn-red">Añadir</button>
-                <div id="cfg-years-list" style="margin-top:10px;"></div>
             </div>
         </div>
     </div>
@@ -397,24 +568,31 @@
             </div>
             <div id="user-dashboard-view"></div>
 
-            <!-- Soporte Usuario -->
-            <div class="card" id="user-support-card" style="display:none; margin-top:15px;">
-                <h2>Soporte Directo</h2>
-                <div id="user-chat-box" class="chat-box"></div>
-                <div style="display:flex; gap:5px;">
-                    <input type="text" id="user-msg-input" placeholder="Escriba su consulta a la directiva..."
-                        class="nav-input" style="margin:0;" onkeyup="if(event.key === 'Enter') sendUserMessage()">
-                    <button onclick="sendUserMessage()" class="btn-red">Enviar</button>
-                </div>
-            </div>
-
             <!-- Mis Recibos -->
             <div class="card" id="user-receipts-card" style="display:none; margin-top:15px;">
                 <h2>Mis Recibos Digitales</h2>
                 <div id="user-receipts-list" style="max-height:200px; overflow-y:auto;"></div>
             </div>
+
         </div>
         <div id="user-avisos" class="tab-content" style="display:none">
+            <div class="card" style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="margin:0; border:none; padding:0; width:50%;">Tablón Oficial</h2>
+                <button id="btn-push-perm-user" onclick="requestPushPermission()" class="btn-ghost" style="color:var(--accent); font-size:0.8rem; border:1px solid var(--accent); padding:5px 10px;">
+                    🔔 Alertas
+                </button>
+            </div>
+
+            <div class="card" style="margin-bottom:15px;">
+                <input type="text" id="user-notice-search" placeholder="🔍 Buscar comunicado..." class="nav-input" onkeyup="filterUserNotices()" style="margin-bottom:10px;">
+                <div style="display:flex; gap:5px; overflow-x:auto; padding-bottom:5px;">
+                    <button class="btn-ghost" onclick="filterUserNotices('all')" style="font-size:0.8rem; padding:4px 8px; border:1px solid #555;">Todos</button>
+                    <button class="btn-ghost" onclick="filterUserNotices('urg')" style="font-size:0.8rem; padding:4px 8px; border:1px solid var(--accent); color:var(--accent);">Urgentes</button>
+                    <button class="btn-ghost" onclick="filterUserNotices('warn')" style="font-size:0.8rem; padding:4px 8px; border:1px solid var(--warning); color:var(--warning);">Importantes</button>
+                    <button class="btn-ghost" onclick="filterUserNotices('info')" style="font-size:0.8rem; padding:4px 8px; border:1px solid var(--success); color:var(--success);">Informativos</button>
+                </div>
+            </div>
+
             <div id="user-notices-list"></div>
         </div>
     </div>
@@ -422,7 +600,13 @@
     <div id="toast-container"></div>
 
     <script src="js/firebase-config.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/globals.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/user.js"></script>
+    <script src="js/main.js"></script>
     <script>
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {
@@ -434,6 +618,10 @@
             });
         }
     </script>
+    <footer class="footer">
+        <div style="font-weight: bold;">@Sr.Avila</div>
+        <div style="font-size: 0.65rem; font-style: italic; margin-top: 2px;">"La simplicidad es la máxima sofisticación." - Leonardo da Vinci</div>
+    </footer>
 </body>
 
 </html>
