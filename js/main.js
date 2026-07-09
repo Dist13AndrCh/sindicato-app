@@ -23,10 +23,12 @@ function init() {
                 const uName = localStorage.getItem('activeUserDashboard');
                 if (uName) {
                     document.getElementById('user-search-input').value = uName;
+                    let attempts = 0;
                     let checkSocios = setInterval(() => {
-                        if (socios.length > 0) {
+                        attempts++;
+                        if (socios.length > 0 || attempts > 50) {
                             clearInterval(checkSocios);
-                            loadUserDashboard();
+                            if (socios.length > 0) loadUserDashboard();
                         }
                     }, 200);
                 }

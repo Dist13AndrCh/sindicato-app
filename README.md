@@ -2,13 +2,14 @@
 
 Sistema integral para el control de asistencias, gestión de cobros y emisión de recibos digitales. Diseñado con una interfaz "Dark/Stealth" altamente responsiva y centrado en la eficiencia operativa.
 
-## Configuración del Proyecto
+## Configuración y Despliegue (Vercel)
 
-Para ejecutar este proyecto localmente con las credenciales originales:
+Las credenciales originales están protegidas y no se suben a GitHub (`.gitignore`).
+El despliegue en Vercel está automatizado mediante `vercel.json`. Para configurar el proyecto de producción:
 
-1. El archivo de credenciales de Firebase (`js/firebase-config.js`) está ignorado en Git por seguridad.
-2. Copia el archivo de plantilla `js/firebase-config-template.js` y renómbralo a `firebase-config.js` dentro de la carpeta `js/`.
-3. Pega las credenciales de tu proyecto original de Firebase en el nuevo archivo.
+1. Ve a los ajustes de tu proyecto en Vercel (Settings > Environment Variables).
+2. Crea una variable llamada `FIREBASE_CONFIG_JS`.
+3. Pega todo el contenido de tu archivo de configuración de Firebase (`const firebaseConfig = {...}; ...`) como valor de la variable. Vercel creará el archivo automáticamente durante el proceso de *build*.
 
 ---
 **@Sr.Avila**
