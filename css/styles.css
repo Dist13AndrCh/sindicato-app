@@ -259,6 +259,97 @@
             .responsive-grid-2, .responsive-grid-asym {
                 grid-template-columns: 1fr;
             }
+
+            /* Historial de meses: apilar año arriba de los meses */
+            .hist-year-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 3px;
+            }
+            .hist-label {
+                width: 100%;
+                text-align: left;
+                font-size: 0.75rem;
+                padding-bottom: 2px;
+            }
+            .hist-months {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .hist-cell {
+                padding: 8px 0;
+                font-size: 0.7rem;
+            }
+
+            /* Gestión de pagos: filas apiladas verticalmente */
+            .pay-row {
+                grid-template-columns: 1fr 1fr !important;
+                grid-template-rows: auto auto;
+                gap: 4px 8px !important;
+                padding: 10px 8px;
+                font-size: 0.8rem;
+            }
+
+            /* Flexbox internos de los selects e inputs (meses, año, etc.) */
+            #tab-pagos div[style*="display: flex; gap: 10px"] {
+                flex-direction: column;
+            }
+
+            /* Tabs selector horizontal scroll */
+            .tabs-selector {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+                gap: 5px;
+            }
+            .tabs-selector::-webkit-scrollbar { display: none; }
+            .tab-btn {
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+
+            /* Correcciones para Reuniones (Asistencia) */
+            #assist-card > div:first-child {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 10px;
+            }
+            #assist-card > div:first-child h2, #assist-card > div:first-child input {
+                width: 100% !important;
+            }
+            /* Override inline style for stat-grid in Asistencia */
+            #assist-card .stat-grid {
+                grid-template-columns: 1fr 1fr !important;
+            }
+            #assist-card .stat-card[style*="grid-column"] {
+                grid-column: span 2 !important; /* Mantiene span 2 en móvil para el último item */
+            }
+
+            /* Correcciones para Reportes */
+            #sub-tab-individual div[style*="display:flex"] {
+                flex-direction: column !important;
+            }
+            #sub-tab-individual button, #sub-tab-general button, #sub-tab-asistencia button {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+
+            /* Correcciones para Avisos */
+            #tab-avisos > div:first-child {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 10px;
+                text-align: center;
+            }
+            #tab-avisos h2 {
+                justify-content: center;
+            }
+            /* Botones de Prioridad */
+            #notice-form-card div[style*="display:flex"] {
+                flex-direction: column !important;
+            }
+            #notice-form-card div[style*="display:flex"] button {
+                padding: 12px !important;
+            }
         }
 
         .card { background: var(--surface-1); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
