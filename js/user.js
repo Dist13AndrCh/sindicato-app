@@ -144,10 +144,10 @@ function sendUserMessage(number) {
     const name = localStorage.getItem('activeUserDashboard') || 'Socio';
     const debt = parseFloat(localStorage.getItem('currentUserDebt')) || 0;
     
-    let msg = `Buenas Tardes, soy *${name}* y tengo una consulta...`;
+    let msg = `Buenas tardes, soy *${name}* y tengo una consulta...`;
     
     if (debt > 0) {
-        msg = `Buenas Tardes, soy *${name}*. Veo en el sistema que tengo una deuda acumulada de *Bs.${debt}* por multas. Quisiera coordinar su pago.`;
+        msg = `Buenas tardes, soy *${name}*. Veo en el sistema que tengo una deuda acumulada de *Bs.${debt}* por multas. Quisiera coordinar su pago.`;
     }
     
     window.open(`https://wa.me/591${number}?text=${encodeURIComponent(msg)}`, '_blank');
