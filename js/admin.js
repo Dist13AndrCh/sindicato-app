@@ -503,10 +503,10 @@ function renderAssistTable(asisDocs, aId, name, filterText = "", act = null) {
         if (isPaid) cobrado += fineToPay;
 
         const btnHtml = `
-            <div style="display:flex; gap:5px;">
-                <button class="${ini ? 'btn-green' : 'btn-ghost'}" style="padding:4px 8px; font-size:0.7rem;" onclick="toggleAsisBtn('${aId}', '${s.id}', 'ini')">INICIO</button>
-                <button class="${fin ? 'btn-green' : 'btn-ghost'}" style="padding:4px 8px; font-size:0.7rem;" onclick="toggleAsisBtn('${aId}', '${s.id}', 'fin')">FINAL</button>
-                <button class="${atr ? 'btn-red' : 'btn-ghost'}" style="padding:4px 8px; font-size:0.7rem; ${atr ? 'background-color:var(--warning); color:#000;' : ''}" onclick="toggleAsisBtn('${aId}', '${s.id}', 'atr')">ATRASO</button>
+            <div style="display:flex; gap:5px; flex-wrap:wrap; justify-content:center;">
+                <button class="${ini ? 'btn-green' : 'btn-ghost'}" style="padding:4px 8px; font-size:0.7rem; flex:1;" onclick="toggleAsisBtn('${aId}', '${s.id}', 'ini')">INICIO</button>
+                <button class="${fin ? 'btn-green' : 'btn-ghost'}" style="padding:4px 8px; font-size:0.7rem; flex:1;" onclick="toggleAsisBtn('${aId}', '${s.id}', 'fin')">FINAL</button>
+                <button class="${atr ? 'btn-red' : 'btn-ghost'}" style="padding:4px 8px; font-size:0.7rem; flex:1; ${atr ? 'background-color:var(--warning); color:#000;' : ''}" onclick="toggleAsisBtn('${aId}', '${s.id}', 'atr')">ATRASO</button>
             </div>
         `;
 

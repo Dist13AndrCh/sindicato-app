@@ -252,7 +252,8 @@
             .rep-table {
                 display: block;
                 overflow-x: auto;
-                white-space: nowrap;
+                white-space: normal; /* Permitir que el texto salte de línea */
+                word-wrap: break-word;
                 -webkit-overflow-scrolling: touch;
             }
 
