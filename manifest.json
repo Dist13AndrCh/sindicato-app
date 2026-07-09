@@ -1,10 +1,13 @@
 {
   "name": "Control Sindical",
   "short_name": "Sindicato",
+  "description": "Sistema de gestión sindical: asistencias, cobros y recibos digitales.",
   "theme_color": "#c41c1c",
   "background_color": "#050505",
   "display": "standalone",
   "orientation": "portrait",
+  "scope": "/",
+  "id": "/",
   "start_url": "./index.html",
   "icons": [
     {
@@ -15,7 +18,8 @@
     {
       "src": "favicon_io/android-chrome-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "favicon_io/apple-touch-icon.png",

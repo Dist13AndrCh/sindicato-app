@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
-    <link rel="manifest" href="favicon_io/site.webmanifest">
+
 
     <!-- Librerías Externas -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -200,6 +200,12 @@
             <button onclick="showInfoModal('Módulo en construcción. Disponible Próximamente.')" class="splash-btn" style="font-size: 0.9rem; opacity: 0.8; background: transparent; color: var(--accent); border-color: var(--border);">📖 Rendición de Cuentas (Próximamente)</button>
         </div>
         <button class="icon-btn" onclick="openThemeModal()" style="position: absolute; top: 20px; right: 20px; font-size: 1.5rem;" title="Apariencia">⚙️</button>
+
+        <!-- Botón Instalar PWA -->
+        <button id="pwa-install-btn" class="pwa-install-btn" style="display: none;" onclick="installPWA()">
+            <span class="pwa-install-icon">⬇️</span>
+            <span class="pwa-install-text">Instalar App</span>
+        </button>
 
         <!-- Soporte Flotante -->
         <div class="fab-container">
@@ -608,6 +614,7 @@
     <script src="js/user.js"></script>
     <script src="js/main.js"></script>
     <script>
+        // Service Worker Registration
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {
                 navigator.serviceWorker.register("/sw.js").then((registration) => {
@@ -617,6 +624,34 @@
                 });
             });
         }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        const installBtn = document.getElementById('pwa-install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installBtn) installBtn.style.display = 'flex';
+        });
+
+        function installPWA() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('PWA instalada exitosamente');
+                }
+                deferredPrompt = null;
+                if (installBtn) installBtn.style.display = 'none';
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+            if (installBtn) installBtn.style.display = 'none';
+            console.log('PWA fue instalada');
+        });
     </script>
     <footer class="footer">
         <div style="font-weight: bold;">@Sr.Avila</div>
