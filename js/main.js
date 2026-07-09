@@ -1,6 +1,6 @@
 function init() {
     const savedTheme = localStorage.getItem('userTheme') || 'blue';
-    document.documentElement.setAttribute('data-theme', savedTheme);
+    setTheme(savedTheme);
     showLoading(true);
     auth.onAuthStateChanged(async (user) => {
         if (!user) {

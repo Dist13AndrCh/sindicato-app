@@ -21,6 +21,22 @@ function closeThemeModal() { document.getElementById('theme-modal').style.displa
 function setTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem('userTheme', t);
+    
+    const metaThemeColor = document.getElementById('theme-color-meta');
+    if (metaThemeColor) {
+        let color = '#000000';
+        switch(t) {
+            case 'dark': color = '#000000'; break;
+            case 'blue': color = '#0f172a'; break;
+            case 'light': color = '#ffffff'; break;
+            case 'billie-dsam': color = '#c41c1c'; break;
+            case 'billie-green': color = '#000000'; break;
+            case 'billie-blonde': color = '#f2e9e4'; break;
+            case 'billie-hmhas': color = '#001a33'; break;
+        }
+        metaThemeColor.setAttribute('content', color);
+    }
+    
     closeThemeModal();
 }
 function showInfoModal(msg) { openCustomInfo('Información', msg); }
