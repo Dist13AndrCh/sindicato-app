@@ -141,10 +141,10 @@ async function loadUserDashboard() {
 }
 
 function sendUserMessage(number) {
-    const name = localStorage.getItem('activeUserDashboard') || 'Socio';
+    const name = localStorage.getItem('activeUserDashboard') || 'Afiliado';
     const debt = parseFloat(localStorage.getItem('currentUserDebt')) || 0;
     
-    let msg = `Buenas tardes, soy *${name}* y tengo una consulta...`;
+    let msg = `Buenas tardes, soy un*${name}* y tengo una consulta...`;
     
     if (debt > 0) {
         msg = `Buenas tardes, soy *${name}*. Veo en el sistema que tengo una deuda acumulada de *Bs.${debt}* por multas. Quisiera coordinar su pago.`;
