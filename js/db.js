@@ -1,3 +1,17 @@
+// Habilitar caché offline nativo de Firebase para cargas instantáneas
+try {
+    firebase.firestore().enablePersistence({ synchronizeTabs: true })
+        .catch((err) => {
+            if (err.code === 'failed-precondition') {
+                console.warn('Persistencia offline limitada: Múltiples pestañas abiertas.');
+            } else if (err.code === 'unimplemented') {
+                console.warn('El navegador no soporta persistencia offline.');
+            }
+        });
+} catch (e) {
+    console.warn("No se pudo inicializar persistencia (posiblemente ya iniciada)", e);
+}
+
 function setupListeners() {
     unsubSocios = getPublicRef('socios').orderBy('nombre').onSnapshot(snap => { socios = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderSocios(); });
     unsubGestiones = getPublicRef('gestiones').orderBy('val', 'desc').onSnapshot(snap => { gestiones = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGestiones(); });
@@ -39,6 +53,16 @@ function setupListeners() {
         asistenciasCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         if (typeof renderPendingFines === 'function') renderPendingFines();
     });
+
+    unsubRecaudaciones = getPublicRef('recaudaciones').orderBy('timestamp', 'desc').onSnapshot(snap => {
+        recaudacionesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (typeof renderRecaudacionesList === 'function') renderRecaudacionesList();
+    });
+
+    unsubAportes = getPublicRef('aportes').onSnapshot(snap => {
+        aportesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (typeof updateRecaudoManagerStats === 'function') updateRecaudoManagerStats();
+    });
 }
 
 function clearListeners() {
@@ -49,6 +73,8 @@ function clearListeners() {
     if(unsubPagos) unsubPagos();
     if(unsubRecibos) unsubRecibos();
     if(unsubAsistencias) unsubAsistencias();
+    if(unsubRecaudaciones) unsubRecaudaciones();
+    if(unsubAportes) unsubAportes();
 }
 
 async function addSocio() { 
@@ -56,9 +82,16 @@ async function addSocio() {
     if (!n) { showToast("El nombre no puede estar vacío"); return; }
     if (socios.some(s => s.nombre === n)) { showToast("El socio ya existe"); return; }
     
-    await getPublicRef('socios').add({ nombre: n }); 
-    document.getElementById('cfg-socio-name').value = ""; 
-    showToast("Socio añadido");
+    showLoading(true);
+    try {
+        await getPublicRef('socios').add({ nombre: n }); 
+        document.getElementById('cfg-socio-name').value = ""; 
+        showToast("Socio añadido");
+    } catch (e) {
+        showToast("Error al añadir socio");
+    } finally {
+        showLoading(false);
+    }
 }
 
 async function addYear() { 
@@ -66,9 +99,16 @@ async function addYear() {
     if (!y || y < 2000 || y > 2100) { showToast("Año inválido"); return; }
     if (gestiones.some(g => g.val === y)) { showToast("La gestión ya existe"); return; }
     
-    await getPublicRef('gestiones').add({ val: y }); 
-    document.getElementById('cfg-new-year').value = ""; 
-    showToast("Gestión añadida");
+    showLoading(true);
+    try {
+        await getPublicRef('gestiones').add({ val: y }); 
+        document.getElementById('cfg-new-year').value = ""; 
+        showToast("Gestión añadida");
+    } catch (e) {
+        showToast("Error al añadir gestión");
+    } finally {
+        showLoading(false);
+    }
 }
 
 function downloadBackup() {
@@ -80,7 +120,9 @@ function downloadBackup() {
         pagos: pagosCache,
         asistencias: asistenciasCache,
         recibos: recibosCache,
-        avisos: window.avisosCache
+        avisos: window.avisosCache,
+        recaudaciones: typeof recaudacionesCache !== 'undefined' ? recaudacionesCache : [],
+        aportes: typeof aportesCache !== 'undefined' ? aportesCache : []
     };
     
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));

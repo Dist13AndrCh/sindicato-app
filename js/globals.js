@@ -1,4 +1,5 @@
-let socios = [], gestiones = [], activities = [], pagosCache = [], recibosCache = [];
+let socios = [], gestiones = [], activities = [], pagosCache = [], recibosCache = [], asistenciasCache = [];
+let recaudacionesCache = [], aportesCache = [];
 let currentEditingSocioId = null;
 let currentReceiptData = null; 
 let currentUserSocioId = null; 
@@ -11,3 +12,6 @@ let unsubActividades = null;
 let unsubAvisos = null;
 let unsubPagos = null;
 let unsubRecibos = null;
+let unsubAsistencias = null;
+let unsubRecaudaciones = null;
+let unsubAportes = null;

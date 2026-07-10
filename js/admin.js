@@ -22,9 +22,14 @@ function updateAdminStats() {
 }
 
 async function loadDossierAdmin() {
-    const name = document.getElementById('pay-name').value;
+    const name = document.getElementById('pay-name').value.trim();
+    if (!name) return;
     const socio = socios.find(s => s.nombre === name);
-    if (!socio) return;
+    if (!socio) {
+        document.getElementById('admin-dossier-view').innerHTML = '<div class="empty-state">Afiliado no encontrado en la base de datos.</div>';
+        document.getElementById('admin-pay-management').style.display = 'none';
+        return;
+    }
 
     document.getElementById('admin-dossier-view').innerHTML = '<div style="color:var(--text-muted); text-align:center;">Cargando historial...</div>';
 
@@ -702,15 +707,13 @@ async function processFinePayment() {
 }
 
 function switchReportSubTab(t) { 
-    document.getElementById('sub-tab-individual').style.display = t === 'individual' ? 'block' : 'none'; 
-    document.getElementById('sub-tab-general').style.display = t === 'general' ? 'block' : 'none'; 
-    document.getElementById('sub-tab-finanzas').style.display = t === 'finanzas' ? 'block' : 'none'; 
-    document.getElementById('sub-tab-asistencia').style.display = t === 'asistencia' ? 'block' : 'none'; 
-    
-    document.getElementById('btn-rep-ind').className = `tab-btn ${t === 'individual' ? 'active' : ''}`; 
-    document.getElementById('btn-rep-gen').className = `tab-btn ${t === 'general' ? 'active' : ''}`; 
-    document.getElementById('btn-rep-fin').className = `tab-btn ${t === 'finanzas' ? 'active' : ''}`; 
-    document.getElementById('btn-rep-asis').className = `tab-btn ${t === 'asistencia' ? 'active' : ''}`; 
+    const tabs = ['individual', 'general', 'finanzas', 'asistencia', 'maestro', 'recaudos'];
+    tabs.forEach(tab => {
+        const el = document.getElementById(`sub-tab-${tab}`);
+        if(el) el.style.display = t === tab ? 'block' : 'none';
+        const btn = document.getElementById(`btn-rep-${tab === 'individual' ? 'ind' : tab === 'general' ? 'gen' : tab === 'finanzas' ? 'fin' : tab === 'asistencia' ? 'asis' : tab === 'maestro' ? 'maestro' : 'rec'}`);
+        if(btn) btn.className = `tab-btn ${t === tab ? 'active' : ''}`;
+    });
     
     if (t === 'asistencia') {
         const select = document.getElementById('rep-asis-act');
@@ -858,8 +861,8 @@ async function generateIndReport() {
 
     showLoading(true);
     const pagos = pagosCache.filter(p => p.socioId === socio.id);
-    const snapA = await getPublicRef('asistencias').where('socioId', '==', socio.id).get();
-    const asistencias = snapA.docs.map(d => d.data());
+    const asistencias = asistenciasCache.filter(a => a.socioId === socio.id);
+    const misAportes = aportesCache.filter(a => a.socioId === socio.id);
 
     document.getElementById('print-subtitle').innerText = socio.nombre;
 
@@ -882,6 +885,21 @@ async function generateIndReport() {
         html += `<tr><td style="text-align:left">${act.name}</td><td>${act.date}</td><td>${asis ? 'Presente' : 'Falta'}</td><td>${asis ? '-' : (pagada ? 'PAGADA (Bs.' + act.fine + ')' : 'DEUDA (Bs.' + act.fine + ')')}</td></tr>`;
     });
     html += `</tbody></table>`;
+
+    html += `<div class="report-section-title">Aportes Extraordinarios (Recaudaciones)</div><table class="rep-table"><thead><tr><th style="text-align:left">Concepto</th><th>Fecha</th><th>Tipo</th><th>Monto</th><th>Estado</th></tr></thead><tbody>`;
+    let noRecaudaciones = true;
+    recaudacionesCache.forEach(rec => {
+        const hasPaid = misAportes.some(a => a.recaudoId === rec.id);
+        if (hasPaid || rec.type === 'obligatoria') {
+            noRecaudaciones = false;
+            const dateStr = rec.timestamp ? new Date(rec.timestamp.seconds * 1000).toLocaleDateString() : '-';
+            let status = hasPaid ? `<span style="color:green; font-weight:bold;">PAGADO</span>` : `<span style="color:red; font-weight:bold;">DEUDA</span>`;
+            html += `<tr><td style="text-align:left">${rec.title}</td><td>${dateStr}</td><td>${rec.type.toUpperCase()}</td><td>Bs. ${rec.amount}</td><td>${status}</td></tr>`;
+        }
+    });
+    if (noRecaudaciones) html += `<tr><td colspan="5" style="text-align:center;">No registra aportes ni deudas extraordinarias.</td></tr>`;
+    html += `</tbody></table>`;
+
     document.getElementById('rep-visual-content').innerHTML = html;
     showLoading(false);
     showToast("Kardex generado");

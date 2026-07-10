@@ -7,14 +7,49 @@ async function loadUserDashboard() {
     localStorage.setItem('activeUserDashboard', socio.nombre);
 
     showLoading(true);
-    const pagos = pagosCache.filter(p => p.socioId === socio.id);
-    const snapA = await getPublicRef('asistencias').where('socioId', '==', socio.id).get();
-    const asistencias = snapA.docs.map(d => d.data());
+    try {
+        const pagos = pagosCache.filter(p => p.socioId === socio.id);
+        const asistencias = asistenciasCache.filter(a => a.socioId === socio.id);
+        const misAportes = aportesCache.filter(a => a.socioId === socio.id);
 
-    let totalPagados = pagos.length;
-    let totalRestantes = (gestiones.length * 12) - totalPagados;
-    let totalDeuda = 0; 
-    let multasHtml = `<div class="card no-hover"><h3>Multas y Reuniones</h3>`;
+        let totalPagados = pagos.length;
+        let totalRestantes = (gestiones.length * 12) - totalPagados;
+        let totalDeuda = 0; 
+        
+        let aportesHtml = `<div class="card no-hover" style="margin-top:15px;" id="user-aportes-card"><h3>Aportes y Recaudaciones</h3>`;
+        let recDeuda = 0;
+        let hasRecaudaciones = false;
+
+        recaudacionesCache.forEach(rec => {
+            const hasPaid = misAportes.some(a => a.recaudoId === rec.id);
+            if (hasPaid) {
+                hasRecaudaciones = true;
+                aportesHtml += `
+                    <div class="item-row" style="border-left: 3px solid var(--success); margin-bottom: 5px;">
+                        <span style="font-size:0.9rem;">${rec.title}</span>
+                        <span style="color:var(--success); font-weight:bold;">Bs.${rec.amount}</span>
+                    </div>`;
+            } else if (rec.type === 'obligatoria') {
+                hasRecaudaciones = true;
+                recDeuda += rec.amount;
+                aportesHtml += `
+                    <div class="item-row" style="border-left: 3px solid var(--accent); margin-bottom: 5px;">
+                        <span style="font-size:0.9rem;">${rec.title}</span>
+                        <span style="color:var(--accent); font-weight:bold;">DEBE Bs.${rec.amount}</span>
+                    </div>`;
+            }
+        });
+
+        if (!hasRecaudaciones) {
+            aportesHtml += `<div class="empty-state">No tienes aportes o deudas extraordinarias.</div>`;
+        } else if (recDeuda > 0) {
+            aportesHtml += `<div style="text-align:right; margin-top:10px; font-weight:bold; color:var(--accent);">Deuda Especial: Bs.${recDeuda}</div>`;
+        }
+        aportesHtml += `</div>`;
+
+        totalDeuda += recDeuda;
+
+        let multasHtml = `<div class="card no-hover" style="margin-top:15px;"><h3>Multas y Reuniones</h3>`;
 
     activities.forEach(act => {
         const a = asistencias.find(as => as.actId === act.id);
@@ -109,7 +144,7 @@ async function loadUserDashboard() {
     // Guardamos la deuda total en localStorage para usarla en WhatsApp
     localStorage.setItem('currentUserDebt', totalDeuda);
     
-    document.getElementById('user-dashboard-view').innerHTML = html;
+    document.getElementById('user-dashboard-view').innerHTML = html + aportesHtml;
 
     const recibosSocio = recibosCache.filter(r => r.socioId === socio.id);
     const multasSocio = recibosSocio.filter(r => r.isFine);
@@ -134,10 +169,15 @@ async function loadUserDashboard() {
             `).join("")}
         </div>`;
     }
-    document.getElementById('user-receipts-card').style.display = 'block';
-    document.getElementById('user-support-card').style.display = 'block';
+        document.getElementById('user-receipts-card').style.display = 'block';
+        document.getElementById('user-support-card').style.display = 'block';
 
-    showLoading(false);
+    } catch (error) {
+        console.error("Error loading user dashboard:", error);
+        showToast("Hubo un problema al cargar los datos. Inténtalo de nuevo.");
+    } finally {
+        showLoading(false);
+    }
 }
 
 function sendUserMessage(number) {

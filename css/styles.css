@@ -250,11 +250,16 @@
             .hist-months { grid-template-columns: repeat(6, 1fr); }
             
             .rep-table {
-                display: block;
-                overflow-x: auto;
-                white-space: normal; /* Permitir que el texto salte de línea */
+                display: table;
+                width: 100%;
+                table-layout: fixed; /* Fija las columnas para que no desborden */
+                white-space: normal;
                 word-wrap: break-word;
-                -webkit-overflow-scrolling: touch;
+                word-break: break-word;
+                font-size: 0.65rem; /* Fuente más pequeña para que encaje */
+            }
+            .rep-table th, .rep-table td {
+                padding: 4px 2px; /* Reducir padding en móvil */
             }
 
             .responsive-grid-2, .responsive-grid-asym {
@@ -473,8 +478,10 @@
 
         .pay-manage-section { margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 15px; }
         .pay-manage-list { max-height: 250px; overflow-y: auto; }
-        .pay-row { display: grid; grid-template-columns: 0.5fr 1.5fr 1fr 1fr; align-items: center; background: var(--surface-1); padding: 8px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-        .pay-row:hover { background: var(--surface-2); }
+        .pay-row { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-bottom: 5px; align-items: center; background: var(--surface-2); padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
+        .pay-row .btn-green, .pay-row .btn-red, .pay-row .btn-ghost { padding: 10px 15px; font-size: 0.85rem; min-height: 40px; } /* Hitbox más grande */
+        .pay-row.unpaid { border-left: 4px solid var(--accent); }
+        .pay-row.paid { border-left: 4px solid var(--success); }
         .icon-btn { border: none; background: transparent; cursor: pointer; opacity: 0.7; font-size: 1rem; transition: 0.2s; padding: 0 5px; }
         .icon-btn:hover { opacity: 1; transform: scale(1.1); }
         .icon-btn.edit { color: var(--info); }
